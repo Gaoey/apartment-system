@@ -4,12 +4,13 @@ import Bill from '@/models/Bill';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await dbConnect();
+    const { id } = await params;
     
-    const bill = await Bill.findById(params.id)
+    const bill = await Bill.findById(id)
       .populate('apartmentId', 'name address phone')
       .populate('roomId', 'roomNumber');
     

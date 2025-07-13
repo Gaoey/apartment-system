@@ -57,19 +57,30 @@ interface Bill {
   createdAt: string;
 }
 
-export default function BillPDFPage({ params }: { params: { id: string } }) {
+export default function BillPDFPage({ params }: { params: Promise<{ id: string }> }) {
   const [bill, setBill] = useState<Bill | null>(null);
   const [owner, setOwner] = useState<Owner | null>(null);
   const [loading, setLoading] = useState(true);
+  const [billId, setBillId] = useState<string>('');
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    const getParams = async () => {
+      const resolvedParams = await params;
+      setBillId(resolvedParams.id);
+    };
+    getParams();
+  }, [params]);
+
+  useEffect(() => {
+    if (billId) {
+      fetchData();
+    }
+  }, [billId]);
 
   const fetchData = async () => {
     try {
       const [billRes, ownerRes] = await Promise.all([
-        fetch(`/api/bills/${params.id}`),
+        fetch(`/api/bills/${billId}`),
         fetch('/api/owner')
       ]);
       

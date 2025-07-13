@@ -4,11 +4,12 @@ import Apartment from '@/models/Apartment';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await dbConnect();
-    const apartment = await Apartment.findById(params.id);
+    const { id } = await params;
+    const apartment = await Apartment.findById(id);
     if (!apartment) {
       return NextResponse.json(
         { success: false, error: 'Apartment not found' },
@@ -16,7 +17,7 @@ export async function GET(
       );
     }
     return NextResponse.json({ success: true, data: apartment });
-  } catch (_error) {
+  } catch {
     return NextResponse.json(
       { success: false, error: 'Failed to fetch apartment' },
       { status: 500 }
@@ -26,12 +27,13 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await dbConnect();
+    const { id } = await params;
     const body = await request.json();
-    const apartment = await Apartment.findByIdAndUpdate(params.id, body, {
+    const apartment = await Apartment.findByIdAndUpdate(id, body, {
       new: true,
       runValidators: true,
     });
@@ -42,7 +44,7 @@ export async function PUT(
       );
     }
     return NextResponse.json({ success: true, data: apartment });
-  } catch (_error) {
+  } catch {
     return NextResponse.json(
       { success: false, error: 'Failed to update apartment' },
       { status: 400 }
@@ -52,11 +54,12 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await dbConnect();
-    const apartment = await Apartment.findByIdAndDelete(params.id);
+    const { id } = await params;
+    const apartment = await Apartment.findByIdAndDelete(id);
     if (!apartment) {
       return NextResponse.json(
         { success: false, error: 'Apartment not found' },
@@ -64,7 +67,7 @@ export async function DELETE(
       );
     }
     return NextResponse.json({ success: true, data: {} });
-  } catch (_error) {
+  } catch {
     return NextResponse.json(
       { success: false, error: 'Failed to delete apartment' },
       { status: 500 }

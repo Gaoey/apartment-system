@@ -6,10 +6,11 @@ import { useRouter } from 'next/navigation';
 import { Home, Building, Save, X } from 'lucide-react';
 
 
-export default function EditApartmentPage({ params }: { params: { id: string } }) {
+export default function EditApartmentPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [fetchLoading, setFetchLoading] = useState(true);
+  const [apartmentId, setApartmentId] = useState<string>('');
   const [formData, setFormData] = useState({
     name: '',
     address: '',
@@ -18,12 +19,22 @@ export default function EditApartmentPage({ params }: { params: { id: string } }
   });
 
   useEffect(() => {
-    fetchApartment();
-  }, []);
+    const getParams = async () => {
+      const resolvedParams = await params;
+      setApartmentId(resolvedParams.id);
+    };
+    getParams();
+  }, [params]);
+
+  useEffect(() => {
+    if (apartmentId) {
+      fetchApartment();
+    }
+  }, [apartmentId]);
 
   const fetchApartment = async () => {
     try {
-      const response = await fetch(`/api/apartments/${params.id}`);
+      const response = await fetch(`/api/apartments/${apartmentId}`);
       const data = await response.json();
       if (data.success) {
         setFormData({
@@ -45,7 +56,7 @@ export default function EditApartmentPage({ params }: { params: { id: string } }
     setLoading(true);
 
     try {
-      const response = await fetch(`/api/apartments/${params.id}`, {
+      const response = await fetch(`/api/apartments/${apartmentId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

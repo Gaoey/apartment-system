@@ -4,12 +4,13 @@ import Room from '@/models/Room';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await dbConnect();
+    const { id } = await params;
     
-    const room = await Room.findById(params.id).populate('apartmentId', 'name');
+    const room = await Room.findById(id).populate('apartmentId', 'name');
     
     if (!room) {
       return NextResponse.json(
@@ -39,13 +40,14 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await dbConnect();
+    const { id } = await params;
     
     const body = await request.json();
-    const room = await Room.findByIdAndUpdate(params.id, body, { new: true });
+    const room = await Room.findByIdAndUpdate(id, body, { new: true });
     
     if (!room) {
       return NextResponse.json(
@@ -75,12 +77,13 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await dbConnect();
+    const { id } = await params;
     
-    const room = await Room.findByIdAndDelete(params.id);
+    const room = await Room.findByIdAndDelete(id);
     
     if (!room) {
       return NextResponse.json(

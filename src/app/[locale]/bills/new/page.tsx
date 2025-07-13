@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Home, FileText, Save, X } from 'lucide-react';
+import { Home, FileText, Save, X, Plus, Trash2 } from 'lucide-react';
+import { useTranslations, useLocale } from 'next-intl';
 
 interface Apartment {
   _id: string;
@@ -16,9 +17,15 @@ interface Room {
 }
 
 export default function NewBillPage() {
+  const t = useTranslations('bill');
+  const tv = useTranslations('validation');
+  const tc = useTranslations('common');
+  const tp = useTranslations('placeholder');
+  const locale = useLocale();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<string[]>([]);
   const [apartments, setApartments] = useState<Apartment[]>([]);
   const [rooms, setRooms] = useState<Room[]>([]);
   const [selectedApartmentId, setSelectedApartmentId] = useState(searchParams.get('apartmentId') || '');
@@ -50,7 +57,12 @@ export default function NewBillPage() {
     },
     airconFee: 0,
     fridgeFee: 0,
-    otherFees: 0,
+    otherFees: [] as { description: string; amount: number }[],
+  });
+  
+  const [otherFeesInput, setOtherFeesInput] = useState({
+    description: '',
+    amount: 0,
   });
 
   useEffect(() => {
@@ -89,9 +101,48 @@ export default function NewBillPage() {
     }
   };
 
+  const validateForm = () => {
+    const validationErrors: string[] = [];
+
+    if (!formData.apartmentId) validationErrors.push(tv('pleaseSelectApartment'));
+    if (!formData.roomId) validationErrors.push(tv('pleaseSelectRoom'));
+    if (!formData.tenantName.trim()) validationErrors.push(tv('tenantNameRequired'));
+    if (!formData.tenantAddress.trim()) validationErrors.push(tv('tenantAddressRequired'));
+    if (!formData.tenantPhone.trim()) validationErrors.push(tv('tenantPhoneRequired'));
+    if (!formData.tenantTaxId.trim()) validationErrors.push(tv('tenantTaxIdRequired'));
+    if (!formData.rentalPeriod.from) validationErrors.push(tv('rentalPeriodFromRequired'));
+    if (!formData.rentalPeriod.to) validationErrors.push(tv('rentalPeriodToRequired'));
+    if (formData.rent <= 0) validationErrors.push(tv('rentMustBeGreaterThanZero'));
+    
+    if (formData.rentalPeriod.from && formData.rentalPeriod.to) {
+      const fromDate = new Date(formData.rentalPeriod.from);
+      const toDate = new Date(formData.rentalPeriod.to);
+      if (fromDate >= toDate) {
+        validationErrors.push(tv('rentalPeriodFromMustBeBeforeTo'));
+      }
+    }
+
+    if (formData.electricity.endMeter < formData.electricity.startMeter) {
+      validationErrors.push(tv('electricityEndMeterMustBeGreaterOrEqual'));
+    }
+
+    if (formData.water.endMeter < formData.water.startMeter) {
+      validationErrors.push(tv('waterEndMeterMustBeGreaterOrEqual'));
+    }
+
+    setErrors(validationErrors);
+    return validationErrors.length === 0;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!validateForm()) {
+      return;
+    }
+
     setLoading(true);
+    setErrors([]);
 
     try {
       const response = await fetch('/api/bills', {
@@ -104,13 +155,13 @@ export default function NewBillPage() {
 
       const data = await response.json();
       if (data.success) {
-        router.push('/bills');
+        router.push(`/${locale}/bills`);
       } else {
-        alert('Error creating bill: ' + (data.error || 'Unknown error'));
+        setErrors([data.error || tv('unknownErrorOccurred')]);
       }
     } catch (error) {
       console.error('Error creating bill:', error);
-      alert('Error creating bill');
+      setErrors([tv('networkError')]);
     } finally {
       setLoading(false);
     }
@@ -147,13 +198,31 @@ export default function NewBillPage() {
     }));
   };
 
+  const addOtherFee = () => {
+    if (otherFeesInput.description.trim() && otherFeesInput.amount > 0) {
+      setFormData(prev => ({
+        ...prev,
+        otherFees: [...prev.otherFees, { ...otherFeesInput }],
+      }));
+      setOtherFeesInput({ description: '', amount: 0 });
+    }
+  };
+
+  const removeOtherFee = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      otherFees: prev.otherFees.filter((_, i) => i !== index),
+    }));
+  };
+
   const calculatePreview = () => {
     const netRent = formData.rent - formData.discount;
     const electricityCost = (formData.electricity.endMeter - formData.electricity.startMeter) * formData.electricity.rate + formData.electricity.meterFee;
     const waterCost = (formData.water.endMeter - formData.water.startMeter) * formData.water.rate + formData.water.meterFee;
-    const grandTotal = netRent + electricityCost + waterCost + formData.airconFee + formData.fridgeFee + formData.otherFees;
+    const otherFeesTotal = formData.otherFees.reduce((sum, fee) => sum + fee.amount, 0);
+    const grandTotal = netRent + electricityCost + waterCost + formData.airconFee + formData.fridgeFee + otherFeesTotal;
 
-    return { netRent, electricityCost, waterCost, grandTotal };
+    return { netRent, electricityCost, waterCost, otherFeesTotal, grandTotal };
   };
 
   const preview = calculatePreview();
@@ -162,26 +231,40 @@ export default function NewBillPage() {
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-8">
         <div className="flex items-center gap-3 mb-8">
-          <Link href="/" className="text-blue-600 hover:text-blue-800">
+          <Link href={`/${locale}`} className="text-blue-600 hover:text-blue-800">
             <Home className="w-5 h-5" />
           </Link>
-          <Link href="/bills" className="text-blue-600 hover:text-blue-800">
+          <Link href={`/${locale}/bills`} className="text-blue-600 hover:text-blue-800">
             <FileText className="w-5 h-5" />
           </Link>
           <span className="text-gray-400">/</span>
-          <h1 className="text-3xl font-bold text-gray-900">Create New Bill</h1>
+          <h1 className="text-3xl font-bold text-gray-900">{t('createNew')}</h1>
         </div>
 
         <div className="max-w-4xl mx-auto">
+          {errors.length > 0 && (
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+              <h4 className="text-red-800 font-medium mb-2">{tv('fixFollowingErrors')}</h4>
+              <ul className="text-red-700 text-sm space-y-1">
+                {errors.map((error, index) => (
+                  <li key={index} className="flex items-start">
+                    <span className="inline-block w-1 h-1 bg-red-500 rounded-full mt-2 mr-2 flex-shrink-0"></span>
+                    {error}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          
           <form onSubmit={handleSubmit}>
             <div className="grid lg:grid-cols-3 gap-6">
               <div className="lg:col-span-2 space-y-6">
                 <div className="bg-white rounded-lg shadow-md p-6">
-                  <h3 className="text-lg font-semibold mb-4">Basic Information</h3>
+                  <h3 className="text-lg font-semibold mb-4">{t('basicInfo')}</h3>
                   <div className="grid md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Apartment *
+                        {t('apartment')} *
                       </label>
                       <select
                         name="apartmentId"
@@ -190,7 +273,7 @@ export default function NewBillPage() {
                         required
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       >
-                        <option value="">Select apartment</option>
+                        <option value="">{t('selectApartment')}</option>
                         {apartments.map((apt) => (
                           <option key={apt._id} value={apt._id}>{apt.name}</option>
                         ))}
@@ -198,7 +281,7 @@ export default function NewBillPage() {
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Room *
+                        {t('room')} *
                       </label>
                       <select
                         name="roomId"
@@ -208,7 +291,7 @@ export default function NewBillPage() {
                         disabled={!selectedApartmentId}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
                       >
-                        <option value="">Select room</option>
+                        <option value="">{t('selectRoom')}</option>
                         {rooms.map((room) => (
                           <option key={room._id} value={room._id}>Room {room.roomNumber}</option>
                         ))}
@@ -216,7 +299,7 @@ export default function NewBillPage() {
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Billing Date *
+                        {t('billingDate')} *
                       </label>
                       <input
                         type="date"
@@ -231,11 +314,11 @@ export default function NewBillPage() {
                 </div>
 
                 <div className="bg-white rounded-lg shadow-md p-6">
-                  <h3 className="text-lg font-semibold mb-4">Tenant Information</h3>
+                  <h3 className="text-lg font-semibold mb-4">{t('tenantInfo')}</h3>
                   <div className="space-y-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Tenant Name *
+                        {t('tenantName')} *
                       </label>
                       <input
                         type="text"
@@ -248,7 +331,7 @@ export default function NewBillPage() {
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Address *
+                        {t('tenantAddress')} *
                       </label>
                       <textarea
                         name="tenantAddress"
@@ -262,7 +345,7 @@ export default function NewBillPage() {
                     <div className="grid md:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Phone *
+                          {t('tenantPhone')} *
                         </label>
                         <input
                           type="tel"
@@ -275,7 +358,7 @@ export default function NewBillPage() {
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Tax ID *
+                          {t('tenantTaxId')} *
                         </label>
                         <input
                           type="text"
@@ -291,12 +374,12 @@ export default function NewBillPage() {
                 </div>
 
                 <div className="bg-white rounded-lg shadow-md p-6">
-                  <h3 className="text-lg font-semibold mb-4">Rental Period & Charges</h3>
+                  <h3 className="text-lg font-semibold mb-4">{t('rentalPeriodAndCharges')}</h3>
                   <div className="space-y-4">
                     <div className="grid md:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Period From *
+                          {t('periodFrom')} *
                         </label>
                         <input
                           type="date"
@@ -309,7 +392,7 @@ export default function NewBillPage() {
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Period To *
+                          {t('periodTo')} *
                         </label>
                         <input
                           type="date"
@@ -324,7 +407,7 @@ export default function NewBillPage() {
                     <div className="grid md:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Rent (THB) *
+                          {t('rent')} ({t('thb')}) *
                         </label>
                         <input
                           type="number"
@@ -339,7 +422,7 @@ export default function NewBillPage() {
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Discount (THB)
+                          {t('discount')} ({t('thb')})
                         </label>
                         <input
                           type="number"
@@ -356,14 +439,14 @@ export default function NewBillPage() {
                 </div>
 
                 <div className="bg-white rounded-lg shadow-md p-6">
-                  <h3 className="text-lg font-semibold mb-4">Utilities</h3>
+                  <h3 className="text-lg font-semibold mb-4">{t('utilities')}</h3>
                   <div className="space-y-6">
                     <div>
-                      <h4 className="font-medium mb-3">Electricity</h4>
+                      <h4 className="font-medium mb-3">{t('electricity')}</h4>
                       <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Start Meter
+                            {t('startMeter')}
                           </label>
                           <input
                             type="number"
@@ -377,7 +460,7 @@ export default function NewBillPage() {
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">
-                            End Meter
+                            {t('endMeter')}
                           </label>
                           <input
                             type="number"
@@ -391,7 +474,7 @@ export default function NewBillPage() {
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Rate (THB/unit)
+                            {t('rate')} ({t('thb')}/{t('electricityUnit')})
                           </label>
                           <input
                             type="number"
@@ -405,7 +488,7 @@ export default function NewBillPage() {
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Meter Fee (THB)
+                            {t('meterFee')} ({t('thb')})
                           </label>
                           <input
                             type="number"
@@ -421,11 +504,11 @@ export default function NewBillPage() {
                     </div>
 
                     <div>
-                      <h4 className="font-medium mb-3">Water</h4>
+                      <h4 className="font-medium mb-3">{t('water')}</h4>
                       <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Start Meter
+                            {t('startMeter')}
                           </label>
                           <input
                             type="number"
@@ -439,7 +522,7 @@ export default function NewBillPage() {
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">
-                            End Meter
+                            {t('endMeter')}
                           </label>
                           <input
                             type="number"
@@ -453,7 +536,7 @@ export default function NewBillPage() {
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Rate (THB/unit)
+                            {t('rate')} ({t('thb')}/{t('electricityUnit')})
                           </label>
                           <input
                             type="number"
@@ -467,7 +550,7 @@ export default function NewBillPage() {
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Meter Fee (THB)
+                            {t('meterFee')} ({t('thb')})
                           </label>
                           <input
                             type="number"
@@ -483,11 +566,11 @@ export default function NewBillPage() {
                     </div>
 
                     <div>
-                      <h4 className="font-medium mb-3">Other Fees</h4>
-                      <div className="grid md:grid-cols-3 gap-4">
+                      <h4 className="font-medium mb-3">{t('otherFees')}</h4>
+                      <div className="grid md:grid-cols-2 gap-4 mb-4">
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Aircon Fee (THB)
+                            {t('airconFee')} ({t('thb')})
                           </label>
                           <input
                             type="number"
@@ -501,7 +584,7 @@ export default function NewBillPage() {
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Fridge Fee (THB)
+                            {t('fridgeFee')} ({t('thb')})
                           </label>
                           <input
                             type="number"
@@ -513,19 +596,62 @@ export default function NewBillPage() {
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                           />
                         </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Other Fees (THB)
-                          </label>
-                          <input
-                            type="number"
-                            name="otherFees"
-                            value={formData.otherFees}
-                            onChange={handleChange}
-                            min="0"
-                            step="0.01"
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          />
+                      </div>
+
+                      <div className="border-t pt-4">
+                        <h5 className="font-medium mb-3">{t('additionalOtherFees')}</h5>
+                        
+                        {formData.otherFees.length > 0 && (
+                          <div className="space-y-2 mb-4">
+                            {formData.otherFees.map((fee, index) => (
+                              <div key={index} className="flex items-center gap-3 p-3 bg-gray-50 rounded-md">
+                                <div className="flex-1">
+                                  <span className="font-medium text-gray-700">{fee.description}</span>
+                                </div>
+                                <div className="text-gray-600">
+                                  ฿{fee.amount.toLocaleString()}
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => removeOtherFee(index)}
+                                  className="text-red-600 hover:text-red-800 p-1"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        <div className="flex gap-3">
+                          <div className="flex-1">
+                            <input
+                              type="text"
+                              placeholder={tp('feeDescription')}
+                              value={otherFeesInput.description}
+                              onChange={(e) => setOtherFeesInput(prev => ({ ...prev, description: e.target.value }))}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            />
+                          </div>
+                          <div className="w-32">
+                            <input
+                              type="number"
+                              placeholder={tp('amount')}
+                              value={otherFeesInput.amount}
+                              onChange={(e) => setOtherFeesInput(prev => ({ ...prev, amount: parseFloat(e.target.value) || 0 }))}
+                              min="0"
+                              step="0.01"
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            />
+                          </div>
+                          <button
+                            type="button"
+                            onClick={addOtherFee}
+                            className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 flex items-center gap-2"
+                          >
+                            <Plus className="w-4 h-4" />
+                            {tc('add')}
+                          </button>
                         </div>
                       </div>
                     </div>
@@ -535,51 +661,61 @@ export default function NewBillPage() {
 
               <div className="space-y-6">
                 <div className="bg-white rounded-lg shadow-md p-6 sticky top-4">
-                  <h3 className="text-lg font-semibold mb-4">Bill Preview</h3>
+                  <h3 className="text-lg font-semibold mb-4">{t('preview')}</h3>
                   <div className="space-y-3 text-sm">
                     <div className="flex justify-between">
-                      <span>Rent:</span>
+                      <span>{t('rent')}:</span>
                       <span>฿{formData.rent.toLocaleString()}</span>
                     </div>
                     {formData.discount > 0 && (
                       <div className="flex justify-between text-red-600">
-                        <span>Discount:</span>
+                        <span>{t('discount')}:</span>
                         <span>-฿{formData.discount.toLocaleString()}</span>
                       </div>
                     )}
                     <div className="flex justify-between">
-                      <span>Net Rent:</span>
+                      <span>{t('netRent')}:</span>
                       <span>฿{preview.netRent.toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span>Electricity ({(formData.electricity.endMeter - formData.electricity.startMeter).toFixed(1)} units):</span>
+                      <span>{t('electricity')} ({(formData.electricity.endMeter - formData.electricity.startMeter).toFixed(1)} {t('electricityUnit')}):</span>
                       <span>฿{preview.electricityCost.toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span>Water ({(formData.water.endMeter - formData.water.startMeter).toFixed(1)} units):</span>
+                      <span>{t('water')} ({(formData.water.endMeter - formData.water.startMeter).toFixed(1)} {t('waterUnit')}):</span>
                       <span>฿{preview.waterCost.toLocaleString()}</span>
                     </div>
                     {formData.airconFee > 0 && (
                       <div className="flex justify-between">
-                        <span>Aircon Fee:</span>
+                        <span>{t('airconFee')}:</span>
                         <span>฿{formData.airconFee.toLocaleString()}</span>
                       </div>
                     )}
                     {formData.fridgeFee > 0 && (
                       <div className="flex justify-between">
-                        <span>Fridge Fee:</span>
+                        <span>{t('fridgeFee')}:</span>
                         <span>฿{formData.fridgeFee.toLocaleString()}</span>
                       </div>
                     )}
-                    {formData.otherFees > 0 && (
-                      <div className="flex justify-between">
-                        <span>Other Fees:</span>
-                        <span>฿{formData.otherFees.toLocaleString()}</span>
+                    {formData.otherFees.length > 0 && (
+                      <div className="space-y-1">
+                        {formData.otherFees.map((fee, index) => (
+                          <div key={index} className="flex justify-between">
+                            <span>{fee.description}:</span>
+                            <span>฿{fee.amount.toLocaleString()}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {preview.otherFeesTotal > 0 && (
+                      <div className="flex justify-between font-medium">
+                        <span>{t('totalOtherFees')}:</span>
+                        <span>฿{preview.otherFeesTotal.toLocaleString()}</span>
                       </div>
                     )}
                     <hr className="my-3" />
                     <div className="flex justify-between font-semibold text-lg">
-                      <span>Grand Total:</span>
+                      <span>{t('grandTotal')}:</span>
                       <span className="text-green-600">฿{preview.grandTotal.toLocaleString()}</span>
                     </div>
                   </div>
@@ -592,14 +728,14 @@ export default function NewBillPage() {
                     className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
                     <Save className="w-4 h-4" />
-                    {loading ? 'Creating...' : 'Create Bill'}
+                    {loading ? t('creating') : t('createNew')}
                   </button>
                   <Link
-                    href="/bills"
+                    href={`/${locale}/bills`}
                     className="w-full flex items-center justify-center gap-2 bg-gray-300 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-400 transition-colors"
                   >
                     <X className="w-4 h-4" />
-                    Cancel
+                    {tc('cancel')}
                   </Link>
                 </div>
               </div>

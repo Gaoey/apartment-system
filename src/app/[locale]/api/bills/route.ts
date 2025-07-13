@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
       .sort({ createdAt: -1 });
     
     return NextResponse.json({ success: true, data: bills });
-  } catch (_error) {
+  } catch {
     return NextResponse.json(
       { success: false, error: 'Failed to fetch bills' },
       { status: 500 }
@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const bill = await Bill.create(body);
     return NextResponse.json({ success: true, data: bill }, { status: 201 });
-  } catch (_error) {
+  } catch {
     return NextResponse.json(
       { success: false, error: 'Failed to create bill' },
       { status: 400 }

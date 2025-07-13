@@ -28,7 +28,10 @@ export interface IBill extends Document {
   };
   airconFee: number;
   fridgeFee: number;
-  otherFees: number;
+  otherFees: Array<{
+    description: string;
+    amount: number;
+  }>;
   netRent: number;
   electricityCost: number;
   waterCost: number;
@@ -148,11 +151,18 @@ const BillSchema: Schema = new Schema(
       default: 0,
       min: 0,
     },
-    otherFees: {
-      type: Number,
-      default: 0,
-      min: 0,
-    },
+    otherFees: [{
+      description: {
+        type: String,
+        required: [true, 'Other fee description is required'],
+        trim: true,
+      },
+      amount: {
+        type: Number,
+        required: [true, 'Other fee amount is required'],
+        min: 0,
+      },
+    }],
     netRent: {
       type: Number,
       required: true,
@@ -179,11 +189,12 @@ const BillSchema: Schema = new Schema(
   }
 );
 
-BillSchema.pre('save', function (next) {
+BillSchema.pre('save', function (this: IBill, next) {
   this.netRent = this.rent - this.discount;
   this.electricityCost = (this.electricity.endMeter - this.electricity.startMeter) * this.electricity.rate + this.electricity.meterFee;
   this.waterCost = (this.water.endMeter - this.water.startMeter) * this.water.rate + this.water.meterFee;
-  this.grandTotal = this.netRent + this.electricityCost + this.waterCost + this.airconFee + this.fridgeFee + this.otherFees;
+  const otherFeesTotal = this.otherFees.reduce((sum, fee) => sum + fee.amount, 0);
+  this.grandTotal = this.netRent + this.electricityCost + this.waterCost + this.airconFee + this.fridgeFee + otherFeesTotal;
   next();
 });
 

@@ -34,27 +34,37 @@ npm run lint         # Run ESLint
 - **Database**: MongoDB with Mongoose ODM
 - **PDF Generation**: jsPDF, html2canvas, @react-pdf/renderer
 - **UI Icons**: Lucide React
+- **Internationalization**: next-intl (Thai/English support)
 
 ### Project Structure
 ```
 src/
-├── app/                    # Next.js App Router pages
-│   ├── api/               # API routes
-│   │   ├── apartments/    # Apartment CRUD operations
-│   │   ├── bills/         # Bill management
-│   │   └── rooms/         # Room operations
-│   ├── apartments/        # Apartment management pages
-│   ├── bills/            # Billing pages
-│   ├── settings/         # Owner settings
-│   └── page.tsx          # Homepage
+├── app/
+│   ├── [locale]/          # Locale-based routing (th/en)
+│   │   ├── api/          # API routes
+│   │   │   ├── apartments/ # Apartment CRUD operations
+│   │   │   ├── bills/     # Bill management
+│   │   │   └── rooms/     # Room operations
+│   │   ├── apartments/    # Apartment management pages
+│   │   ├── bills/        # Billing pages
+│   │   ├── settings/     # Owner settings
+│   │   └── page.tsx      # Homepage
+│   └── layout.tsx        # Root layout
+├── components/           # Reusable React components
+│   ├── Header.tsx       # Main navigation header
+│   └── LanguageSwitcher.tsx # Language switching component
 ├── lib/
-│   └── mongodb.ts        # Database connection
-├── models/               # Mongoose schemas
-│   ├── Apartment.ts      # Apartment model
-│   ├── Room.ts          # Room model
-│   ├── Bill.ts          # Bill model with auto-calculations
-│   └── Owner.ts         # Owner information model
-└── components/          # Reusable React components
+│   └── mongodb.ts       # Database connection
+├── models/              # Mongoose schemas
+│   ├── Apartment.ts     # Apartment model
+│   ├── Room.ts         # Room model
+│   ├── Bill.ts         # Bill model with auto-calculations
+│   └── Owner.ts        # Owner information model
+├── i18n.ts             # Internationalization configuration
+└── middleware.ts       # Next.js middleware for locale routing
+messages/               # Translation files
+├── th.json            # Thai translations
+└── en.json            # English translations
 ```
 
 ### Database Models
@@ -71,7 +81,7 @@ src/
 - apartmentId, roomId, billingDate
 - Tenant information (name, address, phone, taxId)
 - Rental period (from, to dates)
-- Charges: rent, discount, electricity, water, aircon, fridge, other fees
+- Charges: rent, discount, electricity, water, aircon, fridge, dynamic other fees (array of {description, amount})
 - Auto-calculated fields: netRent, electricityCost, waterCost, grandTotal
 - Pre-save hook automatically calculates totals
 
@@ -97,11 +107,19 @@ src/
 1. **Multi-Apartment Management**: Create, update, delete apartments
 2. **Room Management**: Each apartment can have multiple rooms
 3. **Bill Generation**: Automatic calculation of utility costs and totals
-4. **Billing Logic**:
+4. **Dynamic Other Fees**: Add, update, remove multiple other fees with descriptions
+5. **Form Validation**: Comprehensive client-side validation with error messages
+6. **Internationalization (i18n)**:
+   - Thai language as default
+   - English language support
+   - Dynamic language switching
+   - Localized routes (/th/*, /en/*)
+   - Translation-ready navigation and components
+7. **Billing Logic**:
    - Net Rent = Rent - Discount
    - Electricity Cost = (End Meter - Start Meter) × Rate + Meter Fee
    - Water Cost = (End Meter - Start Meter) × Rate + Meter Fee
-   - Grand Total = Net Rent + Electricity + Water + Aircon + Fridge + Other Fees
+   - Grand Total = Net Rent + Electricity + Water + Aircon + Fridge + Sum of Other Fees
 
 ### Development Guidelines
 
@@ -110,6 +128,8 @@ src/
 3. **Model Validation**: Mongoose schemas include validation and required fields
 4. **Auto-calculations**: Bill model uses pre-save hooks for automatic calculations
 5. **TypeScript**: Strict typing with interfaces for all models and API responses
+6. **Internationalization**: Use useTranslations() hook for all user-facing text
+7. **Form Validation**: Implement comprehensive validation with localized error messages
 
 ### Future Implementation Tasks
 

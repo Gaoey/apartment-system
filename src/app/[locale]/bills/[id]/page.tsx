@@ -50,17 +50,28 @@ interface Bill {
   createdAt: string;
 }
 
-export default function BillDetailPage({ params }: { params: { id: string } }) {
+export default function BillDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const [bill, setBill] = useState<Bill | null>(null);
   const [loading, setLoading] = useState(true);
+  const [billId, setBillId] = useState<string>('');
 
   useEffect(() => {
-    fetchBill();
-  }, []);
+    const getParams = async () => {
+      const resolvedParams = await params;
+      setBillId(resolvedParams.id);
+    };
+    getParams();
+  }, [params]);
+
+  useEffect(() => {
+    if (billId) {
+      fetchBill();
+    }
+  }, [billId]);
 
   const fetchBill = async () => {
     try {
-      const response = await fetch(`/api/bills/${params.id}`);
+      const response = await fetch(`/api/bills/${billId}`);
       const data = await response.json();
       if (data.success) {
         setBill(data.data);

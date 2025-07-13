@@ -16,23 +16,34 @@ interface Room {
   createdAt: string;
 }
 
-export default function RoomsPage({ params }: { params: { id: string } }) {
+export default function RoomsPage({ params }: { params: Promise<{ id: string }> }) {
   const [apartment, setApartment] = useState<Apartment | null>(null);
   const [rooms, setRooms] = useState<Room[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
   const [newRoomNumber, setNewRoomNumber] = useState('');
   const [addingRoom, setAddingRoom] = useState(false);
+  const [apartmentId, setApartmentId] = useState<string>('');
 
   useEffect(() => {
-    fetchApartmentAndRooms();
-  }, []);
+    const getParams = async () => {
+      const resolvedParams = await params;
+      setApartmentId(resolvedParams.id);
+    };
+    getParams();
+  }, [params]);
+
+  useEffect(() => {
+    if (apartmentId) {
+      fetchApartmentAndRooms();
+    }
+  }, [apartmentId]);
 
   const fetchApartmentAndRooms = async () => {
     try {
       const [apartmentRes, roomsRes] = await Promise.all([
-        fetch(`/api/apartments/${params.id}`),
-        fetch(`/api/rooms?apartmentId=${params.id}`)
+        fetch(`/api/apartments/${apartmentId}`),
+        fetch(`/api/rooms?apartmentId=${apartmentId}`)
       ]);
       
       const apartmentData = await apartmentRes.json();
@@ -63,7 +74,7 @@ export default function RoomsPage({ params }: { params: { id: string } }) {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          apartmentId: params.id,
+          apartmentId: apartmentId,
           roomNumber: newRoomNumber,
         }),
       });
@@ -203,7 +214,7 @@ export default function RoomsPage({ params }: { params: { id: string } }) {
                 </div>
                 <div className="flex gap-2">
                   <Link
-                    href={`/bills/new?apartmentId=${params.id}&roomId=${room._id}`}
+                    href={`/bills/new?apartmentId=${apartmentId}&roomId=${room._id}`}
                     className="flex-1 text-center bg-green-100 text-green-700 px-3 py-2 rounded text-sm hover:bg-green-200 transition-colors"
                   >
                     Create Bill
