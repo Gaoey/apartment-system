@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Home, FileText, Download, Building, User, Calendar, Receipt } from 'lucide-react';
+import { useTranslations, useLocale } from 'next-intl';
 
 interface Bill {
   _id: string;
@@ -50,7 +51,11 @@ interface Bill {
   createdAt: string;
 }
 
-export default function BillDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default function BillDetailPage({ params }: { params: Promise<{ id: string; locale: string }> }) {
+  const t = useTranslations('bill');
+  const tb = useTranslations('bills');
+  const tc = useTranslations('common');
+  const locale = useLocale();
   const [bill, setBill] = useState<Bill | null>(null);
   const [loading, setLoading] = useState(true);
   const [billId, setBillId] = useState<string>('');
@@ -84,20 +89,20 @@ export default function BillDetailPage({ params }: { params: Promise<{ id: strin
   };
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('th-TH', {
+    return new Intl.NumberFormat(locale === 'th' ? 'th-TH' : 'en-US', {
       style: 'currency',
       currency: 'THB',
     }).format(amount);
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('th-TH');
+    return new Date(dateString).toLocaleDateString(locale);
   };
 
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-lg">Loading...</div>
+        <div className="text-lg">{tc('loading')}</div>
       </div>
     );
   }
@@ -106,9 +111,9 @@ export default function BillDetailPage({ params }: { params: Promise<{ id: strin
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Bill not found</h2>
-          <Link href="/bills" className="text-blue-600 hover:text-blue-800">
-            Back to bills
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">{tb('billNotFound')}</h2>
+          <Link href={`/${locale}/bills`} className="text-blue-600 hover:text-blue-800">
+            {tc('back')} {tb('title')}
           </Link>
         </div>
       </div>
@@ -120,21 +125,21 @@ export default function BillDetailPage({ params }: { params: Promise<{ id: strin
       <div className="container mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-3">
-            <Link href="/" className="text-blue-600 hover:text-blue-800">
+            <Link href={`/${locale}`} className="text-blue-600 hover:text-blue-800">
               <Home className="w-5 h-5" />
             </Link>
-            <Link href="/bills" className="text-blue-600 hover:text-blue-800">
+            <Link href={`/${locale}/bills`} className="text-blue-600 hover:text-blue-800">
               <FileText className="w-5 h-5" />
             </Link>
             <span className="text-gray-400">/</span>
-            <h1 className="text-3xl font-bold text-gray-900">Bill Details</h1>
+            <h1 className="text-3xl font-bold text-gray-900">{tb('billDetails')}</h1>
           </div>
           <Link
-            href={`/bills/${bill._id}/pdf`}
+            href={`/${locale}/bills/${bill._id}/pdf`}
             className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
           >
             <Download className="w-4 h-4" />
-            Download PDF
+            {tb('downloadPDF')}
           </Link>
         </div>
 
@@ -144,14 +149,14 @@ export default function BillDetailPage({ params }: { params: Promise<{ id: strin
               <div className="flex items-center gap-3">
                 <Receipt className="w-8 h-8 text-blue-600" />
                 <div>
-                  <h2 className="text-2xl font-bold text-gray-900">Invoice</h2>
+                  <h2 className="text-2xl font-bold text-gray-900">{t('title')}</h2>
                   {bill.documentNumber && (
-                    <p className="text-gray-600">Document #: {bill.documentNumber}</p>
+                    <p className="text-gray-600">{t('documentNumber')}: {bill.documentNumber}</p>
                   )}
                 </div>
               </div>
               <div className="text-right">
-                <p className="text-sm text-gray-600">Bill Date</p>
+                <p className="text-sm text-gray-600">{t('billingDate')}</p>
                 <p className="text-lg font-semibold">{formatDate(bill.billingDate)}</p>
               </div>
             </div>
@@ -160,26 +165,26 @@ export default function BillDetailPage({ params }: { params: Promise<{ id: strin
               <div>
                 <div className="flex items-center gap-2 mb-3">
                   <Building className="w-5 h-5 text-gray-600" />
-                  <h3 className="font-semibold text-gray-900">Property Information</h3>
+                  <h3 className="font-semibold text-gray-900">{t('propertyInfo')}</h3>
                 </div>
                 <div className="space-y-1 text-gray-700">
-                  <p><span className="font-medium">Building:</span> {bill.apartmentId.name}</p>
-                  <p><span className="font-medium">Room:</span> {bill.roomId.roomNumber}</p>
-                  <p><span className="font-medium">Address:</span> {bill.apartmentId.address}</p>
-                  <p><span className="font-medium">Phone:</span> {bill.apartmentId.phone}</p>
+                  <p><span className="font-medium">{t('apartment')}:</span> {bill.apartmentId.name}</p>
+                  <p><span className="font-medium">{t('room')}:</span> {bill.roomId.roomNumber}</p>
+                  <p><span className="font-medium">{t('tenantAddress')}:</span> {bill.apartmentId.address}</p>
+                  <p><span className="font-medium">{t('tenantPhone')}:</span> {bill.apartmentId.phone}</p>
                 </div>
               </div>
 
               <div>
                 <div className="flex items-center gap-2 mb-3">
                   <User className="w-5 h-5 text-gray-600" />
-                  <h3 className="font-semibold text-gray-900">Tenant Information</h3>
+                  <h3 className="font-semibold text-gray-900">{t('tenantInfo')}</h3>
                 </div>
                 <div className="space-y-1 text-gray-700">
-                  <p><span className="font-medium">Name:</span> {bill.tenantName}</p>
-                  <p><span className="font-medium">Address:</span> {bill.tenantAddress}</p>
-                  <p><span className="font-medium">Phone:</span> {bill.tenantPhone}</p>
-                  <p><span className="font-medium">Tax ID:</span> {bill.tenantTaxId}</p>
+                  <p><span className="font-medium">{t('tenantName')}:</span> {bill.tenantName}</p>
+                  <p><span className="font-medium">{t('tenantAddress')}:</span> {bill.tenantAddress}</p>
+                  <p><span className="font-medium">{t('tenantPhone')}:</span> {bill.tenantPhone}</p>
+                  <p><span className="font-medium">{t('tenantTaxId')}:</span> {bill.tenantTaxId}</p>
                 </div>
               </div>
             </div>
@@ -187,7 +192,7 @@ export default function BillDetailPage({ params }: { params: Promise<{ id: strin
             <div className="mt-8">
               <div className="flex items-center gap-2 mb-3">
                 <Calendar className="w-5 h-5 text-gray-600" />
-                <h3 className="font-semibold text-gray-900">Rental Period</h3>
+                <h3 className="font-semibold text-gray-900">{t('rentalPeriod')}</h3>
               </div>
               <p className="text-gray-700">
                 {formatDate(bill.rentalPeriod.from)} - {formatDate(bill.rentalPeriod.to)}
@@ -196,32 +201,32 @@ export default function BillDetailPage({ params }: { params: Promise<{ id: strin
           </div>
 
           <div className="bg-white rounded-lg shadow-md p-6">
-            <h3 className="text-lg font-semibold mb-6">Billing Details</h3>
+            <h3 className="text-lg font-semibold mb-6">{t('billingDetails')}</h3>
             
             <div className="space-y-4">
               <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                <span className="text-gray-700">Room Rent</span>
+                <span className="text-gray-700">{t('rent')}</span>
                 <span className="font-medium">{formatCurrency(bill.rent)}</span>
               </div>
               
               {bill.discount > 0 && (
                 <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                  <span className="text-gray-700">Discount</span>
+                  <span className="text-gray-700">{t('discount')}</span>
                   <span className="font-medium text-red-600">-{formatCurrency(bill.discount)}</span>
                 </div>
               )}
               
               <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                <span className="text-gray-700">Net Rent</span>
+                <span className="text-gray-700">{t('netRent')}</span>
                 <span className="font-medium">{formatCurrency(bill.netRent)}</span>
               </div>
 
               <div className="space-y-2">
                 <div className="flex justify-between items-center py-2">
                   <div>
-                    <span className="text-gray-700">Electricity</span>
+                    <span className="text-gray-700">{t('electricity')}</span>
                     <div className="text-sm text-gray-500">
-                      {bill.electricity.endMeter - bill.electricity.startMeter} units × {formatCurrency(bill.electricity.rate)} + {formatCurrency(bill.electricity.meterFee)} meter fee
+                      {bill.electricity.endMeter - bill.electricity.startMeter} {t('electricityUnit')} × {formatCurrency(bill.electricity.rate)} + {formatCurrency(bill.electricity.meterFee)} {t('meterFee')}
                     </div>
                   </div>
                   <span className="font-medium">{formatCurrency(bill.electricityCost)}</span>
@@ -229,9 +234,9 @@ export default function BillDetailPage({ params }: { params: Promise<{ id: strin
                 
                 <div className="flex justify-between items-center py-2">
                   <div>
-                    <span className="text-gray-700">Water</span>
+                    <span className="text-gray-700">{t('water')}</span>
                     <div className="text-sm text-gray-500">
-                      {bill.water.endMeter - bill.water.startMeter} units × {formatCurrency(bill.water.rate)} + {formatCurrency(bill.water.meterFee)} meter fee
+                      {bill.water.endMeter - bill.water.startMeter} {t('waterUnit')} × {formatCurrency(bill.water.rate)} + {formatCurrency(bill.water.meterFee)} {t('meterFee')}
                     </div>
                   </div>
                   <span className="font-medium">{formatCurrency(bill.waterCost)}</span>
@@ -240,37 +245,37 @@ export default function BillDetailPage({ params }: { params: Promise<{ id: strin
 
               {bill.airconFee > 0 && (
                 <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                  <span className="text-gray-700">Air Conditioning Fee</span>
+                  <span className="text-gray-700">{t('airconFee')}</span>
                   <span className="font-medium">{formatCurrency(bill.airconFee)}</span>
                 </div>
               )}
 
               {bill.fridgeFee > 0 && (
                 <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                  <span className="text-gray-700">Refrigerator Fee</span>
+                  <span className="text-gray-700">{t('fridgeFee')}</span>
                   <span className="font-medium">{formatCurrency(bill.fridgeFee)}</span>
                 </div>
               )}
 
               {bill.otherFees > 0 && (
                 <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                  <span className="text-gray-700">Other Fees</span>
+                  <span className="text-gray-700">{t('otherFees')}</span>
                   <span className="font-medium">{formatCurrency(bill.otherFees)}</span>
                 </div>
               )}
 
               <div className="flex justify-between items-center py-4 border-t-2 border-gray-200 mt-4">
-                <span className="text-xl font-semibold text-gray-900">Grand Total</span>
+                <span className="text-xl font-semibold text-gray-900">{t('grandTotal')}</span>
                 <span className="text-2xl font-bold text-green-600">{formatCurrency(bill.grandTotal)}</span>
               </div>
             </div>
           </div>
 
           <div className="bg-white rounded-lg shadow-md p-6">
-            <h3 className="text-lg font-semibold mb-4">Additional Information</h3>
+            <h3 className="text-lg font-semibold mb-4">{t('additionalInfo')}</h3>
             <div className="text-sm text-gray-600 space-y-1">
-              <p><span className="font-medium">Created:</span> {formatDate(bill.createdAt)}</p>
-              <p><span className="font-medium">Bill ID:</span> {bill._id}</p>
+              <p><span className="font-medium">{tc('created')}:</span> {formatDate(bill.createdAt)}</p>
+              <p><span className="font-medium">{t('billId')}:</span> {bill._id}</p>
             </div>
           </div>
         </div>

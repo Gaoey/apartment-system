@@ -66,7 +66,9 @@
     "noRoomsDesc": "ยังไม่มีห้องในอพาร์ตเมนต์นี้ เริ่มต้นโดยการเพิ่มห้องแรก",
     "roomsFor": "ห้องสำหรับ",
     "createBill": "สร้างใบแจ้งหนี้",
-    "addRoom": "เพิ่มห้อง"
+    "addRoom": "เพิ่มห้อง",
+    "room": "ห้อง",
+    "deleteConfirm": "คุณแน่ใจหรือไม่ที่ต้องการลบห้องนี้?"
   },
   "bills": {
     "title": "จัดการใบแจ้งหนี้",
@@ -79,7 +81,9 @@
     "tenant": "ผู้เช่า",
     "totalAmount": "จำนวนเงินรวม",
     "apartment": "อพาร์ตเมนต์",
-    "room": "ห้อง"
+    "room": "ห้อง",
+    "billNotFound": "ไม่พบใบแจ้งหนี้",
+    "billDetails": "รายละเอียดใบแจ้งหนี้"
   },
   "bill": {
     "title": "ใบแจ้งหนี้",
@@ -122,7 +126,13 @@
     "thb": "บาท",
     "selectApartment": "เลือกอพาร์ตเมนต์",
     "selectRoom": "เลือกห้อง",
-    "required": "จำเป็น"
+    "required": "จำเป็น",
+    "documentNumber": "เลขที่เอกสาร",
+    "propertyInfo": "ข้อมูลอสังหาริมทรัพย์",
+    "rentalPeriod": "ระยะเวลาการเช่า",
+    "billingDetails": "รายละเอียดการเรียกเก็บเงิน",
+    "additionalInfo": "ข้อมูลเพิ่มเติม",
+    "billId": "รหัสใบแจ้งหนี้"
   },
   "validation": {
     "pleaseSelectApartment": "กรุณาเลือกอพาร์ตเมนต์",

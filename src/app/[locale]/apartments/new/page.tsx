@@ -4,8 +4,12 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Home, Building, Save, X } from 'lucide-react';
+import { useTranslations, useLocale } from 'next-intl';
 
 export default function NewApartmentPage() {
+  const t = useTranslations('apartments');
+  const tc = useTranslations('common');
+  const locale = useLocale();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -30,7 +34,7 @@ export default function NewApartmentPage() {
 
       const data = await response.json();
       if (data.success) {
-        router.push('/apartments');
+        router.push(`/${locale}/apartments`);
       } else {
         alert('Error creating apartment: ' + (data.error || 'Unknown error'));
       }
@@ -53,14 +57,14 @@ export default function NewApartmentPage() {
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-8">
         <div className="flex items-center gap-3 mb-8">
-          <Link href="/" className="text-blue-600 hover:text-blue-800">
+          <Link href={`/${locale}`} className="text-blue-600 hover:text-blue-800">
             <Home className="w-5 h-5" />
           </Link>
-          <Link href="/apartments" className="text-blue-600 hover:text-blue-800">
+          <Link href={`/${locale}/apartments`} className="text-blue-600 hover:text-blue-800">
             <Building className="w-5 h-5" />
           </Link>
           <span className="text-gray-400">/</span>
-          <h1 className="text-3xl font-bold text-gray-900">New Apartment</h1>
+          <h1 className="text-3xl font-bold text-gray-900">{t('createNew')}</h1>
         </div>
 
         <div className="max-w-2xl mx-auto">
@@ -69,7 +73,7 @@ export default function NewApartmentPage() {
               <div className="space-y-6">
                 <div>
                   <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-                    Apartment Name *
+                    {t('name')} *
                   </label>
                   <input
                     type="text"
@@ -85,7 +89,7 @@ export default function NewApartmentPage() {
 
                 <div>
                   <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-2">
-                    Address *
+                    {t('address')} *
                   </label>
                   <textarea
                     id="address"
@@ -101,7 +105,7 @@ export default function NewApartmentPage() {
 
                 <div>
                   <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
-                    Phone Number *
+                    {t('phone')} *
                   </label>
                   <input
                     type="tel"
@@ -117,7 +121,7 @@ export default function NewApartmentPage() {
 
                 <div>
                   <label htmlFor="taxId" className="block text-sm font-medium text-gray-700 mb-2">
-                    Tax ID *
+                    {t('taxId')} *
                   </label>
                   <input
                     type="text"
@@ -139,14 +143,14 @@ export default function NewApartmentPage() {
                   className="flex items-center gap-2 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   <Save className="w-4 h-4" />
-                  {loading ? 'Creating...' : 'Create Apartment'}
+                  {loading ? t('creating') : t('createNew')}
                 </button>
                 <Link
-                  href="/apartments"
+                  href={`/${locale}/apartments`}
                   className="flex items-center gap-2 bg-gray-300 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-400 transition-colors"
                 >
                   <X className="w-4 h-4" />
-                  Cancel
+                  {tc('cancel')}
                 </Link>
               </div>
             </form>

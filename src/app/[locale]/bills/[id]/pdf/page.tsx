@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Home, FileText, Download, ArrowLeft } from 'lucide-react';
+import { useTranslations, useLocale } from 'next-intl';
 
 interface Owner {
   name: string;
@@ -57,7 +58,10 @@ interface Bill {
   createdAt: string;
 }
 
-export default function BillPDFPage({ params }: { params: Promise<{ id: string }> }) {
+export default function BillPDFPage({ params }: { params: Promise<{ id: string; locale: string }> }) {
+  const t = useTranslations('bill');
+  const tc = useTranslations('common');
+  const locale = useLocale();
   const [bill, setBill] = useState<Bill | null>(null);
   const [owner, setOwner] = useState<Owner | null>(null);
   const [loading, setLoading] = useState(true);
@@ -118,7 +122,7 @@ export default function BillPDFPage({ params }: { params: Promise<{ id: string }
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-lg">Loading...</div>
+        <div className="text-lg">{tc('loading')}</div>
       </div>
     );
   }
