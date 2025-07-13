@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Home, Settings, Save, User } from 'lucide-react';
+import { useTranslations, useLocale } from 'next-intl';
 
 interface Owner {
   _id?: string;
@@ -13,6 +14,9 @@ interface Owner {
 }
 
 export default function SettingsPage() {
+  const t = useTranslations('settings');
+  const tc = useTranslations('common');
+  const locale = useLocale();
   const [loading, setLoading] = useState(false);
   const [fetchLoading, setFetchLoading] = useState(true);
   const [owner, setOwner] = useState<Owner>({
@@ -58,7 +62,7 @@ export default function SettingsPage() {
       const data = await response.json();
       if (data.success) {
         setOwner(data.data);
-        setSuccessMessage('Owner information saved successfully!');
+        setSuccessMessage(t('saved'));
         setTimeout(() => setSuccessMessage(''), 3000);
       } else {
         alert('Error saving owner information: ' + (data.error || 'Unknown error'));
@@ -81,7 +85,7 @@ export default function SettingsPage() {
   if (fetchLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-lg">Loading...</div>
+        <div className="text-lg">{tc('loading')}</div>
       </div>
     );
   }
@@ -90,11 +94,11 @@ export default function SettingsPage() {
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-8">
         <div className="flex items-center gap-3 mb-8">
-          <Link href="/" className="text-blue-600 hover:text-blue-800">
+          <Link href={`/${locale}`} className="text-blue-600 hover:text-blue-800">
             <Home className="w-5 h-5" />
           </Link>
           <Settings className="w-6 h-6 text-gray-600" />
-          <h1 className="text-3xl font-bold text-gray-900">Owner Settings</h1>
+          <h1 className="text-3xl font-bold text-gray-900">{t('title')}</h1>
         </div>
 
         <div className="max-w-2xl mx-auto">
@@ -107,17 +111,17 @@ export default function SettingsPage() {
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="flex items-center gap-3 mb-6">
               <User className="w-6 h-6 text-gray-600" />
-              <h2 className="text-xl font-semibold text-gray-900">Owner Information</h2>
+              <h2 className="text-xl font-semibold text-gray-900">{t('ownerInfo')}</h2>
             </div>
             <p className="text-gray-600 mb-6">
-              This information will be used on all bills and invoices. Make sure it&apos;s accurate and up-to-date.
+              {t('description')}
             </p>
 
             <form onSubmit={handleSubmit}>
               <div className="space-y-6">
                 <div>
                   <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-                    Owner Name *
+                    {t('name')} *
                   </label>
                   <input
                     type="text"
@@ -133,7 +137,7 @@ export default function SettingsPage() {
 
                 <div>
                   <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-2">
-                    Address *
+                    {t('address')} *
                   </label>
                   <textarea
                     id="address"
@@ -149,7 +153,7 @@ export default function SettingsPage() {
 
                 <div>
                   <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
-                    Phone Number *
+                    {t('phone')} *
                   </label>
                   <input
                     type="tel"
@@ -165,7 +169,7 @@ export default function SettingsPage() {
 
                 <div>
                   <label htmlFor="taxId" className="block text-sm font-medium text-gray-700 mb-2">
-                    Tax ID *
+                    {t('taxId')} *
                   </label>
                   <input
                     type="text"
@@ -187,19 +191,16 @@ export default function SettingsPage() {
                   className="flex items-center gap-2 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   <Save className="w-4 h-4" />
-                  {loading ? 'Saving...' : 'Save Owner Information'}
+                  {loading ? t('saving') : t('save')}
                 </button>
               </div>
             </form>
           </div>
 
           <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <h3 className="font-medium text-blue-900 mb-2">About Owner Settings</h3>
+            <h3 className="font-medium text-blue-900 mb-2">{t('title')}</h3>
             <ul className="text-sm text-blue-800 space-y-1">
-              <li>• Owner information appears on all generated bills and invoices</li>
-              <li>• This information is required for proper tax documentation</li>
-              <li>• You can update this information at any time</li>
-              <li>• Changes will apply to all new bills created after saving</li>
+              <li>• {t('description')}</li>
             </ul>
           </div>
         </div>

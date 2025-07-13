@@ -165,19 +165,19 @@ const BillSchema: Schema = new Schema(
     }],
     netRent: {
       type: Number,
-      required: true,
+      default: 0,
     },
     electricityCost: {
       type: Number,
-      required: true,
+      default: 0,
     },
     waterCost: {
       type: Number,
-      required: true,
+      default: 0,
     },
     grandTotal: {
       type: Number,
-      required: true,
+      default: 0,
     },
     documentNumber: {
       type: String,

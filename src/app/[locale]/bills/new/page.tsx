@@ -26,6 +26,7 @@ export default function NewBillPage() {
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [apartments, setApartments] = useState<Apartment[]>([]);
   const [rooms, setRooms] = useState<Room[]>([]);
   const [selectedApartmentId, setSelectedApartmentId] = useState(searchParams.get('apartmentId') || '');
@@ -103,33 +104,65 @@ export default function NewBillPage() {
 
   const validateForm = () => {
     const validationErrors: string[] = [];
+    const newFieldErrors: Record<string, string> = {};
 
-    if (!formData.apartmentId) validationErrors.push(tv('pleaseSelectApartment'));
-    if (!formData.roomId) validationErrors.push(tv('pleaseSelectRoom'));
-    if (!formData.tenantName.trim()) validationErrors.push(tv('tenantNameRequired'));
-    if (!formData.tenantAddress.trim()) validationErrors.push(tv('tenantAddressRequired'));
-    if (!formData.tenantPhone.trim()) validationErrors.push(tv('tenantPhoneRequired'));
-    if (!formData.tenantTaxId.trim()) validationErrors.push(tv('tenantTaxIdRequired'));
-    if (!formData.rentalPeriod.from) validationErrors.push(tv('rentalPeriodFromRequired'));
-    if (!formData.rentalPeriod.to) validationErrors.push(tv('rentalPeriodToRequired'));
-    if (formData.rent <= 0) validationErrors.push(tv('rentMustBeGreaterThanZero'));
+    if (!formData.apartmentId) {
+      validationErrors.push(tv('pleaseSelectApartment'));
+      newFieldErrors.apartmentId = tv('pleaseSelectApartment');
+    }
+    if (!formData.roomId) {
+      validationErrors.push(tv('pleaseSelectRoom'));
+      newFieldErrors.roomId = tv('pleaseSelectRoom');
+    }
+    if (!formData.tenantName.trim()) {
+      validationErrors.push(tv('tenantNameRequired'));
+      newFieldErrors.tenantName = tv('tenantNameRequired');
+    }
+    if (!formData.tenantAddress.trim()) {
+      validationErrors.push(tv('tenantAddressRequired'));
+      newFieldErrors.tenantAddress = tv('tenantAddressRequired');
+    }
+    if (!formData.tenantPhone.trim()) {
+      validationErrors.push(tv('tenantPhoneRequired'));
+      newFieldErrors.tenantPhone = tv('tenantPhoneRequired');
+    }
+    if (!formData.tenantTaxId.trim()) {
+      validationErrors.push(tv('tenantTaxIdRequired'));
+      newFieldErrors.tenantTaxId = tv('tenantTaxIdRequired');
+    }
+    if (!formData.rentalPeriod.from) {
+      validationErrors.push(tv('rentalPeriodFromRequired'));
+      newFieldErrors['rentalPeriod.from'] = tv('rentalPeriodFromRequired');
+    }
+    if (!formData.rentalPeriod.to) {
+      validationErrors.push(tv('rentalPeriodToRequired'));
+      newFieldErrors['rentalPeriod.to'] = tv('rentalPeriodToRequired');
+    }
+    if (formData.rent <= 0) {
+      validationErrors.push(tv('rentMustBeGreaterThanZero'));
+      newFieldErrors.rent = tv('rentMustBeGreaterThanZero');
+    }
     
     if (formData.rentalPeriod.from && formData.rentalPeriod.to) {
       const fromDate = new Date(formData.rentalPeriod.from);
       const toDate = new Date(formData.rentalPeriod.to);
       if (fromDate >= toDate) {
         validationErrors.push(tv('rentalPeriodFromMustBeBeforeTo'));
+        newFieldErrors['rentalPeriod.to'] = tv('rentalPeriodFromMustBeBeforeTo');
       }
     }
 
     if (formData.electricity.endMeter < formData.electricity.startMeter) {
       validationErrors.push(tv('electricityEndMeterMustBeGreaterOrEqual'));
+      newFieldErrors['electricity.endMeter'] = tv('electricityEndMeterMustBeGreaterOrEqual');
     }
 
     if (formData.water.endMeter < formData.water.startMeter) {
       validationErrors.push(tv('waterEndMeterMustBeGreaterOrEqual'));
+      newFieldErrors['water.endMeter'] = tv('waterEndMeterMustBeGreaterOrEqual');
     }
 
+    setFieldErrors(newFieldErrors);
     setErrors(validationErrors);
     return validationErrors.length === 0;
   };
@@ -143,8 +176,11 @@ export default function NewBillPage() {
 
     setLoading(true);
     setErrors([]);
+    setFieldErrors({});
 
     try {
+      console.log('Sending bill data:', formData);
+      
       const response = await fetch('/api/bills', {
         method: 'POST',
         headers: {
@@ -157,7 +193,15 @@ export default function NewBillPage() {
       if (data.success) {
         router.push(`/${locale}/bills`);
       } else {
-        setErrors([data.error || tv('unknownErrorOccurred')]);
+        console.error('API Error:', data);
+        
+        // Handle validation errors
+        if (data.validationErrors) {
+          const validationMessages = Object.values(data.validationErrors) as string[];
+          setErrors(validationMessages);
+        } else {
+          setErrors([data.error || data.details || tv('unknownErrorOccurred')]);
+        }
       }
     } catch (error) {
       console.error('Error creating bill:', error);
@@ -170,6 +214,15 @@ export default function NewBillPage() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
     const actualValue = type === 'number' ? parseFloat(value) || 0 : value;
+
+    // Clear field error when user starts typing
+    if (fieldErrors[name]) {
+      setFieldErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
+    }
 
     if (name.includes('.')) {
       const [parent, child] = name.split('.');
@@ -196,6 +249,15 @@ export default function NewBillPage() {
       apartmentId,
       roomId: '',
     }));
+  };
+
+  const getFieldError = (fieldName: string) => {
+    return fieldErrors[fieldName];
+  };
+
+  const getInputClassName = (fieldName: string, baseClassName: string) => {
+    const hasError = fieldErrors[fieldName];
+    return `${baseClassName} ${hasError ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500'}`;
   };
 
   const addOtherFee = () => {
@@ -271,13 +333,16 @@ export default function NewBillPage() {
                         value={formData.apartmentId}
                         onChange={handleApartmentChange}
                         required
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className={getInputClassName('apartmentId', 'w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:border-transparent')}
                       >
                         <option value="">{t('selectApartment')}</option>
                         {apartments.map((apt) => (
                           <option key={apt._id} value={apt._id}>{apt.name}</option>
                         ))}
                       </select>
+                      {getFieldError('apartmentId') && (
+                        <p className="mt-1 text-sm text-red-600">{getFieldError('apartmentId')}</p>
+                      )}
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -289,13 +354,16 @@ export default function NewBillPage() {
                         onChange={handleChange}
                         required
                         disabled={!selectedApartmentId}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
+                        className={getInputClassName('roomId', 'w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:border-transparent disabled:bg-gray-100')}
                       >
                         <option value="">{t('selectRoom')}</option>
                         {rooms.map((room) => (
                           <option key={room._id} value={room._id}>Room {room.roomNumber}</option>
                         ))}
                       </select>
+                      {getFieldError('roomId') && (
+                        <p className="mt-1 text-sm text-red-600">{getFieldError('roomId')}</p>
+                      )}
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -326,8 +394,11 @@ export default function NewBillPage() {
                         value={formData.tenantName}
                         onChange={handleChange}
                         required
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className={getInputClassName('tenantName', 'w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:border-transparent')}
                       />
+                      {getFieldError('tenantName') && (
+                        <p className="mt-1 text-sm text-red-600">{getFieldError('tenantName')}</p>
+                      )}
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
