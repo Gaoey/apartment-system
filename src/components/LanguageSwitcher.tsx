@@ -18,22 +18,29 @@ export default function LanguageSwitcher() {
   ];
 
   const switchLanguage = (newLocale: string) => {
-    // Remove the current locale from the pathname
-    let pathWithoutLocale = pathname;
-    if (pathname.startsWith(`/${locale}`)) {
-      pathWithoutLocale = pathname.substring(`/${locale}`.length) || '/';
+    // Split pathname into segments
+    const segments = pathname.split('/').filter(Boolean);
+    
+    // Remove the first segment if it's a locale
+    if (segments.length > 0 && (segments[0] === 'th' || segments[0] === 'en')) {
+      segments.shift();
     }
     
-    // Ensure path starts with /
-    if (!pathWithoutLocale.startsWith('/')) {
-      pathWithoutLocale = '/' + pathWithoutLocale;
-    }
-    
+    // Build new path with new locale
+    const pathWithoutLocale = segments.length > 0 ? '/' + segments.join('/') : '';
     const newPath = `/${newLocale}${pathWithoutLocale}`;
-    console.log('Language switch:', { pathname, locale, newLocale, pathWithoutLocale, newPath });
     
-    // Use router.replace for immediate navigation
-    router.replace(newPath);
+    console.log('Language switch debug:', { 
+      originalPathname: pathname, 
+      segments,
+      currentLocale: locale, 
+      newLocale, 
+      pathWithoutLocale, 
+      finalNewPath: newPath 
+    });
+    
+    // Use router.push for navigation
+    router.push(newPath);
     setIsOpen(false);
   };
 
