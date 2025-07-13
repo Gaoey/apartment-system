@@ -19,6 +19,7 @@
   "nav": {
     "apartments": "อพาร์ตเมนต์",
     "bills": "ใบแจ้งหนี้",
+    "monthlySum": "สรุปรายเดือน",
     "settings": "ตั้งค่า",
     "language": "ภาษา"
   },
@@ -88,7 +89,9 @@
   "bill": {
     "title": "ใบแจ้งหนี้",
     "createNew": "สร้างใบแจ้งหนี้ใหม่",
+    "editBill": "แก้ไขใบแจ้งหนี้",
     "creating": "กำลังสร้าง...",
+    "updating": "กำลังอัปเดต...",
     "basicInfo": "ข้อมูลพื้นฐาน",
     "tenantInfo": "ข้อมูลผู้เช่า",
     "rentalPeriodAndCharges": "ระยะเวลาการเช่าและค่าใช้จ่าย",
@@ -97,6 +100,7 @@
     "apartment": "อพาร์ตเมนต์",
     "room": "ห้อง",
     "billingDate": "วันที่แจ้งหนี้",
+    "paymentDueDate": "วันครบกำหนดชำระ",
     "tenantName": "ชื่อผู้เช่า",
     "tenantAddress": "ที่อยู่ผู้เช่า",
     "tenantPhone": "โทรศัพท์ผู้เช่า",
@@ -181,5 +185,33 @@
     "saving": "กำลังบันทึก...",
     "saved": "บันทึกการตั้งค่าสำเร็จ",
     "description": "กำหนดค่าข้อมูลเจ้าของที่จะปรากฏในใบแจ้งหนี้"
+  },
+  "monthlySum": {
+    "title": "สรุปรายเดือน",
+    "description": "ดูและส่งออกสรุปใบแจ้งหนี้รายเดือน",
+    "selectMonth": "เลือกเดือน",
+    "summaryFor": "สรุปสำหรับ",
+    "exportPDF": "ส่งออก PDF",
+    "billNumber": "เลขที่ใบแจ้งหนี้",
+    "roomNumber": "ห้อง",
+    "tenantName": "ชื่อผู้เช่า",
+    "rentalPeriod": "ระยะเวลาเช่า",
+    "rentCost": "ค่าเช่า",
+    "electricityCost": "ค่าไฟฟ้า",
+    "waterCost": "ค่าน้ำ",
+    "otherFees": "ค่าใช้จ่ายอื่นๆ",
+    "totalCost": "รวม",
+    "totalBills": "ใบแจ้งหนี้ทั้งหมด",
+    "totalRent": "ค่าเช่ารวม",
+    "totalElectricity": "ค่าไฟฟ้ารวม",
+    "totalWater": "ค่าน้ำรวม",
+    "totalOtherFees": "ค่าใช้จ่ายอื่นๆ รวม",
+    "grandTotal": "รวมทั้งสิ้น",
+    "noBills": "ไม่พบใบแจ้งหนี้",
+    "noBillsDescription": "ไม่พบใบแจ้งหนี้สำหรับเดือนและปีที่เลือก",
+    "pdfTitle": "สรุปใบแจ้งหนี้รายเดือน",
+    "summaryOverview": "ภาพรวมสรุป",
+    "totals": "รวม",
+    "generatedOn": "สร้างเมื่อ"
   }
 }

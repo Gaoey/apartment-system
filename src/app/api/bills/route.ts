@@ -1,10 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import dbConnect from "@/lib/mongodb";
 import Bill from "@/models/Bill";
+import Room from "@/models/Room";
+import Apartment from "@/models/Apartment";
 
 export async function GET(request: NextRequest) {
   try {
     await dbConnect();
+    
+    // Ensure models are registered
+    void Room;
+    void Apartment;
+    
     const { searchParams } = new URL(request.url);
     const apartmentId = searchParams.get("apartmentId");
     const roomId = searchParams.get("roomId");
@@ -13,15 +20,24 @@ export async function GET(request: NextRequest) {
     if (apartmentId) query.apartmentId = apartmentId;
     if (roomId) query.roomId = roomId;
 
+    console.log("Fetching bills with query:", query);
+
     const bills = await Bill.find(query)
       .populate("apartmentId", "name")
       .populate("roomId", "roomNumber")
       .sort({ createdAt: -1 });
 
+    console.log("Bills fetched successfully:", bills.length);
     return NextResponse.json({ success: true, data: bills });
-  } catch {
+  } catch (error: unknown) {
+    console.error("Error fetching bills:", error);
+    
+    const errorMessage = error && typeof error === 'object' && 'message' in error && typeof error.message === 'string' 
+      ? error.message 
+      : 'Unknown error occurred';
+    
     return NextResponse.json(
-      { success: false, error: "Failed to fetch bills" },
+      { success: false, error: "Failed to fetch bills", details: errorMessage },
       { status: 500 }
     );
   }

@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
-import { Home, Building, FileText, Settings } from 'lucide-react';
+import { Home, Building, FileText, Settings, BarChart3 } from 'lucide-react';
 import LanguageSwitcher from './LanguageSwitcher';
 
 export default function Header() {
@@ -13,6 +13,7 @@ export default function Header() {
     { href: `/${locale}`, icon: Home, label: t('apartments'), isHome: true },
     { href: `/${locale}/apartments`, icon: Building, label: t('apartments') },
     { href: `/${locale}/bills`, icon: FileText, label: t('bills') },
+    { href: `/${locale}/bills/monthly-summary`, icon: BarChart3, label: t('monthlySum') },
     { href: `/${locale}/settings`, icon: Settings, label: t('settings') },
   ];
 

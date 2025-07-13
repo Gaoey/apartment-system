@@ -2,11 +2,15 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Home, FileText, Download, Building, User, Calendar, Receipt } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Home, FileText, Download, Building, User, Calendar, Receipt, Edit, Trash2 } from 'lucide-react';
 import { useTranslations, useLocale } from 'next-intl';
 
 interface Bill {
   _id: string;
+  runningNumber: string;
+  billPosition: number;
+  totalBillsInMonth: number;
   apartmentId: {
     _id: string;
     name: string;
@@ -42,7 +46,11 @@ interface Bill {
   };
   airconFee: number;
   fridgeFee: number;
-  otherFees: number;
+  otherFees: Array<{
+    description: string;
+    amount: number;
+  }>;
+  otherFeesTotal: number;
   netRent: number;
   electricityCost: number;
   waterCost: number;
@@ -56,8 +64,10 @@ export default function BillDetailPage({ params }: { params: Promise<{ id: strin
   const tb = useTranslations('bills');
   const tc = useTranslations('common');
   const locale = useLocale();
+  const router = useRouter();
   const [bill, setBill] = useState<Bill | null>(null);
   const [loading, setLoading] = useState(true);
+  const [deleting, setDeleting] = useState(false);
   const [billId, setBillId] = useState<string>('');
 
   useEffect(() => {
@@ -76,7 +86,7 @@ export default function BillDetailPage({ params }: { params: Promise<{ id: strin
 
   const fetchBill = async () => {
     try {
-      const response = await fetch(`/api/bills/${billId}`);
+      const response = await fetch(`/api/bills/${billId}/with-running-number`);
       const data = await response.json();
       if (data.success) {
         setBill(data.data);
@@ -97,6 +107,39 @@ export default function BillDetailPage({ params }: { params: Promise<{ id: strin
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString(locale);
+  };
+
+  const handleDelete = async () => {
+    if (!bill || deleting) return;
+    
+    const confirmed = window.confirm(
+      locale === 'th' 
+        ? 'คุณแน่ใจหรือไม่ที่ต้องการลบใบแจ้งหนี้นี้?' 
+        : 'Are you sure you want to delete this bill?'
+    );
+    
+    if (!confirmed) return;
+    
+    setDeleting(true);
+    
+    try {
+      const response = await fetch(`/api/bills/${billId}`, {
+        method: 'DELETE',
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        router.push(`/${locale}/bills`);
+      } else {
+        alert(data.error || 'Failed to delete bill');
+      }
+    } catch (error) {
+      console.error('Error deleting bill:', error);
+      alert('Network error occurred');
+    } finally {
+      setDeleting(false);
+    }
   };
 
   if (loading) {
@@ -134,13 +177,30 @@ export default function BillDetailPage({ params }: { params: Promise<{ id: strin
             <span className="text-gray-400">/</span>
             <h1 className="text-3xl font-bold text-gray-900">{tb('billDetails')}</h1>
           </div>
-          <Link
-            href={`/${locale}/bills/${bill._id}/pdf`}
-            className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
-          >
-            <Download className="w-4 h-4" />
-            {tb('downloadPDF')}
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link
+              href={`/${locale}/bills/${bill._id}/edit`}
+              className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              <Edit className="w-4 h-4" />
+              {tc('edit')}
+            </Link>
+            <button
+              onClick={handleDelete}
+              disabled={deleting}
+              className="flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              <Trash2 className="w-4 h-4" />
+              {deleting ? 'Deleting...' : tc('delete')}
+            </button>
+            <Link
+              href={`/${locale}/bills/${bill._id}/pdf`}
+              className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
+            >
+              <Download className="w-4 h-4" />
+              {tb('downloadPDF')}
+            </Link>
+          </div>
         </div>
 
         <div className="max-w-4xl mx-auto space-y-6">
@@ -150,6 +210,7 @@ export default function BillDetailPage({ params }: { params: Promise<{ id: strin
                 <Receipt className="w-8 h-8 text-blue-600" />
                 <div>
                   <h2 className="text-2xl font-bold text-gray-900">{t('title')}</h2>
+                  <p className="text-gray-600">{t('billId')}: {bill.runningNumber}</p>
                   {bill.documentNumber && (
                     <p className="text-gray-600">{t('documentNumber')}: {bill.documentNumber}</p>
                   )}
@@ -257,10 +318,21 @@ export default function BillDetailPage({ params }: { params: Promise<{ id: strin
                 </div>
               )}
 
-              {bill.otherFees > 0 && (
+              {bill.otherFees.length > 0 && (
+                <div className="space-y-2">
+                  {bill.otherFees.map((fee, index) => (
+                    <div key={index} className="flex justify-between items-center py-2 border-b border-gray-100">
+                      <span className="text-gray-700">{fee.description}</span>
+                      <span className="font-medium">{formatCurrency(fee.amount)}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {bill.otherFeesTotal > 0 && (
                 <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                  <span className="text-gray-700">{t('otherFees')}</span>
-                  <span className="font-medium">{formatCurrency(bill.otherFees)}</span>
+                  <span className="text-gray-700">{t('totalOtherFees')}</span>
+                  <span className="font-medium">{formatCurrency(bill.otherFeesTotal)}</span>
                 </div>
               )}
 
@@ -275,7 +347,9 @@ export default function BillDetailPage({ params }: { params: Promise<{ id: strin
             <h3 className="text-lg font-semibold mb-4">{t('additionalInfo')}</h3>
             <div className="text-sm text-gray-600 space-y-1">
               <p><span className="font-medium">{tc('created')}:</span> {formatDate(bill.createdAt)}</p>
-              <p><span className="font-medium">{t('billId')}:</span> {bill._id}</p>
+              <p><span className="font-medium">{t('billId')}:</span> {bill.runningNumber}</p>
+              <p><span className="font-medium">Position in month:</span> {bill.billPosition} of {bill.totalBillsInMonth}</p>
+              <p><span className="font-medium">Internal ID:</span> {bill._id}</p>
             </div>
           </div>
         </div>

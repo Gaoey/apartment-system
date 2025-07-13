@@ -4,6 +4,7 @@ export interface IBill extends Document {
   apartmentId: mongoose.Types.ObjectId;
   roomId: mongoose.Types.ObjectId;
   billingDate: Date;
+  paymentDueDate: Date;
   tenantName: string;
   tenantAddress: string;
   tenantPhone: string;
@@ -56,6 +57,10 @@ const BillSchema: Schema = new Schema(
     billingDate: {
       type: Date,
       required: [true, 'Billing date is required'],
+    },
+    paymentDueDate: {
+      type: Date,
+      required: [true, 'Payment due date is required'],
     },
     tenantName: {
       type: String,

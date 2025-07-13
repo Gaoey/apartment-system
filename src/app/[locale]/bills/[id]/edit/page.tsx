@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { Home, FileText, Save, X, Plus, Trash2 } from 'lucide-react';
 import { useTranslations, useLocale } from 'next-intl';
 
@@ -16,56 +16,24 @@ interface Room {
   roomNumber: string;
 }
 
-export default function NewBillPage() {
+export default function EditBillPage({ params }: { params: Promise<{ id: string; locale: string }> }) {
   const t = useTranslations('bill');
   const tv = useTranslations('validation');
   const tc = useTranslations('common');
   const tp = useTranslations('placeholder');
   const locale = useLocale();
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
   const [errors, setErrors] = useState<string[]>([]);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [apartments, setApartments] = useState<Apartment[]>([]);
   const [rooms, setRooms] = useState<Room[]>([]);
-  const [selectedApartmentId, setSelectedApartmentId] = useState(searchParams.get('apartmentId') || '');
-  const [autoFillData, setAutoFillData] = useState<{
-    hasData: boolean;
-    roomNumber: string;
-    tenantInfo: {
-      tenantName: string;
-      tenantAddress: string;
-      tenantPhone: string;
-      tenantTaxId: string;
-      lastUpdated: string;
-    };
-    meterReadings: {
-      electricity: {
-        endMeter: number;
-        rate: number;
-        meterFee: number;
-      };
-      water: {
-        endMeter: number;
-        rate: number;
-        meterFee: number;
-      };
-    };
-    recurringFees: {
-      rent: number;
-      discount: number;
-      airconFee: number;
-      fridgeFee: number;
-    };
-    lastBillDate: string;
-    hasCurrentMonthBills: boolean;
-  } | null>(null);
-  const [showAutoFillNotice, setShowAutoFillNotice] = useState(false);
-  const [autoFilledFields, setAutoFilledFields] = useState<string[]>([]);
+  const [billId, setBillId] = useState<string>('');
+  const [selectedApartmentId, setSelectedApartmentId] = useState('');
   const [formData, setFormData] = useState({
-    apartmentId: searchParams.get('apartmentId') || '',
-    roomId: searchParams.get('roomId') || '',
+    apartmentId: '',
+    roomId: '',
     billingDate: new Date().toISOString().split('T')[0],
     paymentDueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     tenantName: '',
@@ -101,8 +69,22 @@ export default function NewBillPage() {
   });
 
   useEffect(() => {
+    const getParams = async () => {
+      const resolvedParams = await params;
+      setBillId(resolvedParams.id);
+    };
+    getParams();
+  }, [params]);
+
+  useEffect(() => {
     fetchApartments();
   }, []);
+
+  useEffect(() => {
+    if (billId) {
+      fetchBillData();
+    }
+  }, [billId]);
 
   useEffect(() => {
     if (selectedApartmentId) {
@@ -112,11 +94,41 @@ export default function NewBillPage() {
     }
   }, [selectedApartmentId]);
 
-  useEffect(() => {
-    if (formData.roomId) {
-      fetchLatestRoomData(formData.roomId);
+  const fetchBillData = async () => {
+    try {
+      const response = await fetch(`/api/bills/${billId}`);
+      const data = await response.json();
+      if (data.success) {
+        const bill = data.data;
+        setFormData({
+          apartmentId: bill.apartmentId._id,
+          roomId: bill.roomId._id,
+          billingDate: bill.billingDate.split('T')[0],
+          paymentDueDate: bill.paymentDueDate ? bill.paymentDueDate.split('T')[0] : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+          tenantName: bill.tenantName,
+          tenantAddress: bill.tenantAddress,
+          tenantPhone: bill.tenantPhone,
+          tenantTaxId: bill.tenantTaxId,
+          rentalPeriod: {
+            from: bill.rentalPeriod.from.split('T')[0],
+            to: bill.rentalPeriod.to.split('T')[0],
+          },
+          rent: bill.rent,
+          discount: bill.discount,
+          electricity: bill.electricity,
+          water: bill.water,
+          airconFee: bill.airconFee,
+          fridgeFee: bill.fridgeFee,
+          otherFees: bill.otherFees || [],
+        });
+        setSelectedApartmentId(bill.apartmentId._id);
+      }
+    } catch (error) {
+      console.error('Error fetching bill:', error);
+    } finally {
+      setInitialLoading(false);
     }
-  }, [formData.roomId]);
+  };
 
   const fetchApartments = async () => {
     try {
@@ -142,79 +154,6 @@ export default function NewBillPage() {
     }
   };
 
-  const fetchLatestRoomData = async (roomId: string) => {
-    try {
-      const response = await fetch(`/api/bills/latest-room-data?roomId=${roomId}`);
-      const data = await response.json();
-      
-      if (data.success && data.data.hasData) {
-        const roomData = data.data;
-        setAutoFillData(roomData);
-        
-        // Auto-fill tenant information
-        const fieldsToFill: string[] = [];
-        const newFormData = { ...formData };
-        
-        if (roomData.tenantInfo.tenantName && !formData.tenantName) {
-          newFormData.tenantName = roomData.tenantInfo.tenantName;
-          fieldsToFill.push('tenantName');
-        }
-        if (roomData.tenantInfo.tenantAddress && !formData.tenantAddress) {
-          newFormData.tenantAddress = roomData.tenantInfo.tenantAddress;
-          fieldsToFill.push('tenantAddress');
-        }
-        if (roomData.tenantInfo.tenantPhone && !formData.tenantPhone) {
-          newFormData.tenantPhone = roomData.tenantInfo.tenantPhone;
-          fieldsToFill.push('tenantPhone');
-        }
-        if (roomData.tenantInfo.tenantTaxId && !formData.tenantTaxId) {
-          newFormData.tenantTaxId = roomData.tenantInfo.tenantTaxId;
-          fieldsToFill.push('tenantTaxId');
-        }
-        
-        // Auto-fill meter readings (use previous end readings as start readings)
-        if (roomData.meterReadings.electricity.endMeter && formData.electricity.startMeter === 0) {
-          newFormData.electricity.startMeter = roomData.meterReadings.electricity.endMeter;
-          newFormData.electricity.rate = roomData.meterReadings.electricity.rate;
-          newFormData.electricity.meterFee = roomData.meterReadings.electricity.meterFee;
-          fieldsToFill.push('electricity.startMeter', 'electricity.rate', 'electricity.meterFee');
-        }
-        
-        if (roomData.meterReadings.water.endMeter && formData.water.startMeter === 0) {
-          newFormData.water.startMeter = roomData.meterReadings.water.endMeter;
-          newFormData.water.rate = roomData.meterReadings.water.rate;
-          newFormData.water.meterFee = roomData.meterReadings.water.meterFee;
-          fieldsToFill.push('water.startMeter', 'water.rate', 'water.meterFee');
-        }
-        
-        // Auto-fill recurring fees
-        if (roomData.recurringFees.rent && formData.rent === 0) {
-          newFormData.rent = roomData.recurringFees.rent;
-          fieldsToFill.push('rent');
-        }
-        if (roomData.recurringFees.discount && formData.discount === 0) {
-          newFormData.discount = roomData.recurringFees.discount;
-          fieldsToFill.push('discount');
-        }
-        if (roomData.recurringFees.airconFee && formData.airconFee === 0) {
-          newFormData.airconFee = roomData.recurringFees.airconFee;
-          fieldsToFill.push('airconFee');
-        }
-        if (roomData.recurringFees.fridgeFee && formData.fridgeFee === 0) {
-          newFormData.fridgeFee = roomData.recurringFees.fridgeFee;
-          fieldsToFill.push('fridgeFee');
-        }
-        
-        if (fieldsToFill.length > 0) {
-          setFormData(newFormData);
-          setAutoFilledFields(fieldsToFill);
-          setShowAutoFillNotice(true);
-        }
-      }
-    } catch (error) {
-      console.error('Error fetching latest room data:', error);
-    }
-  };
 
   const validateForm = () => {
     const validationErrors: string[] = [];
@@ -281,39 +220,6 @@ export default function NewBillPage() {
     return validationErrors.length === 0;
   };
 
-  const updateCurrentMonthTenantInfo = async () => {
-    if (!formData.roomId || !autoFillData) return;
-    
-    // Check if tenant info has changed from the auto-filled data
-    const tenantInfoChanged = 
-      formData.tenantName !== autoFillData.tenantInfo.tenantName ||
-      formData.tenantAddress !== autoFillData.tenantInfo.tenantAddress ||
-      formData.tenantPhone !== autoFillData.tenantInfo.tenantPhone ||
-      formData.tenantTaxId !== autoFillData.tenantInfo.tenantTaxId;
-    
-    if (tenantInfoChanged && autoFillData.hasCurrentMonthBills) {
-      try {
-        await fetch('/api/bills/latest-room-data', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            roomId: formData.roomId,
-            tenantInfo: {
-              tenantName: formData.tenantName,
-              tenantAddress: formData.tenantAddress,
-              tenantPhone: formData.tenantPhone,
-              tenantTaxId: formData.tenantTaxId,
-            },
-            updateCurrentMonth: true,
-          }),
-        });
-      } catch (error) {
-        console.error('Error updating current month tenant info:', error);
-      }
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -327,13 +233,10 @@ export default function NewBillPage() {
     setFieldErrors({});
 
     try {
-      console.log('Sending bill data:', formData);
+      console.log('Updating bill data:', formData);
       
-      // Update tenant info for current month bills if changed
-      await updateCurrentMonthTenantInfo();
-      
-      const response = await fetch('/api/bills', {
-        method: 'POST',
+      const response = await fetch(`/api/bills/${billId}`, {
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
@@ -342,7 +245,7 @@ export default function NewBillPage() {
 
       const data = await response.json();
       if (data.success) {
-        router.push(`/${locale}/bills`);
+        router.push(`/${locale}/bills/${billId}`);
       } else {
         console.error('API Error:', data);
         
@@ -355,7 +258,7 @@ export default function NewBillPage() {
         }
       }
     } catch (error) {
-      console.error('Error creating bill:', error);
+      console.error('Error updating bill:', error);
       setErrors([tv('networkError')]);
     } finally {
       setLoading(false);
@@ -408,19 +311,7 @@ export default function NewBillPage() {
 
   const getInputClassName = (fieldName: string, baseClassName: string) => {
     const hasError = fieldErrors[fieldName];
-    const isAutoFilled = autoFilledFields.includes(fieldName);
-    
-    if (hasError) {
-      return `${baseClassName} border-red-500 focus:border-red-500 focus:ring-red-500`;
-    } else if (isAutoFilled) {
-      return `${baseClassName} border-green-300 bg-green-50 focus:border-green-500 focus:ring-green-500`;
-    } else {
-      return `${baseClassName} border-gray-300 focus:border-blue-500 focus:ring-blue-500`;
-    }
-  };
-
-  const isFieldAutoFilled = (fieldName: string) => {
-    return autoFilledFields.includes(fieldName);
+    return `${baseClassName} ${hasError ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500'}`;
   };
 
   const addOtherFee = () => {
@@ -452,6 +343,14 @@ export default function NewBillPage() {
 
   const preview = calculatePreview();
 
+  if (initialLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-lg">{tc('loading')}</div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-8">
@@ -463,38 +362,10 @@ export default function NewBillPage() {
             <FileText className="w-5 h-5" />
           </Link>
           <span className="text-gray-400">/</span>
-          <h1 className="text-3xl font-bold text-gray-900">{t('createNew')}</h1>
+          <h1 className="text-3xl font-bold text-gray-900">{t('editBill')}</h1>
         </div>
 
         <div className="max-w-4xl mx-auto">
-          {showAutoFillNotice && autoFillData && (
-            <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
-              <div className="flex items-start justify-between">
-                <div>
-                  <h4 className="text-green-800 font-medium mb-2">
-                    📋 Information Auto-filled from Previous Bill
-                  </h4>
-                  <p className="text-green-700 text-sm mb-2">
-                    Tenant information and settings have been automatically filled from the last bill for this room 
-                    ({autoFillData.roomNumber}) dated {new Date(autoFillData.lastBillDate).toLocaleDateString(locale === 'th' ? 'th-TH' : 'en-US')}.
-                  </p>
-                  {autoFillData.hasCurrentMonthBills && (
-                    <p className="text-green-700 text-sm font-medium">
-                      ⚠️ Note: Changing tenant information will update all bills for this room in the current month.
-                    </p>
-                  )}
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setShowAutoFillNotice(false)}
-                  className="text-green-600 hover:text-green-800 ml-4"
-                >
-                  ✕
-                </button>
-              </div>
-            </div>
-          )}
-
           {errors.length > 0 && (
             <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
               <h4 className="text-red-800 font-medium mb-2">{tv('fixFollowingErrors')}</h4>
@@ -591,11 +462,6 @@ export default function NewBillPage() {
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         {t('tenantName')} *
-                        {isFieldAutoFilled('tenantName') && (
-                          <span className="ml-2 text-xs text-green-600 bg-green-100 px-2 py-1 rounded">
-                            Auto-filled
-                          </span>
-                        )}
                       </label>
                       <input
                         type="text"
@@ -727,11 +593,6 @@ export default function NewBillPage() {
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">
                             {t('startMeter')}
-                            {isFieldAutoFilled('electricity.startMeter') && (
-                              <span className="ml-2 text-xs text-green-600 bg-green-100 px-2 py-1 rounded">
-                                Auto-filled
-                              </span>
-                            )}
                           </label>
                           <input
                             type="number"
@@ -794,11 +655,6 @@ export default function NewBillPage() {
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">
                             {t('startMeter')}
-                            {isFieldAutoFilled('water.startMeter') && (
-                              <span className="ml-2 text-xs text-green-600 bg-green-100 px-2 py-1 rounded">
-                                Auto-filled
-                              </span>
-                            )}
                           </label>
                           <input
                             type="number"
@@ -1018,7 +874,7 @@ export default function NewBillPage() {
                     className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
                     <Save className="w-4 h-4" />
-                    {loading ? t('creating') : t('createNew')}
+                    {loading ? t('updating') : t('editBill')}
                   </button>
                   <Link
                     href={`/${locale}/bills`}

@@ -19,6 +19,7 @@
   "nav": {
     "apartments": "Apartments",
     "bills": "Bills",
+    "monthlySum": "Monthly Summary",
     "settings": "Settings",
     "language": "Language"
   },
@@ -88,7 +89,9 @@
   "bill": {
     "title": "Bill",
     "createNew": "Create New Bill",
+    "editBill": "Edit Bill",
     "creating": "Creating...",
+    "updating": "Updating...",
     "basicInfo": "Basic Information",
     "tenantInfo": "Tenant Information",
     "rentalPeriodAndCharges": "Rental Period & Charges",
@@ -97,6 +100,7 @@
     "apartment": "Apartment",
     "room": "Room",
     "billingDate": "Billing Date",
+    "paymentDueDate": "Payment Due Date",
     "tenantName": "Tenant Name",
     "tenantAddress": "Tenant Address",
     "tenantPhone": "Tenant Phone",
@@ -181,5 +185,33 @@
     "saving": "Saving...",
     "saved": "Settings saved successfully",
     "description": "Configure owner information that will appear on bills"
+  },
+  "monthlySum": {
+    "title": "Monthly Summary",
+    "description": "View and export monthly billing summary",
+    "selectMonth": "Select Month",
+    "summaryFor": "Summary for",
+    "exportPDF": "Export PDF",
+    "billNumber": "Bill Number",
+    "roomNumber": "Room",
+    "tenantName": "Tenant Name",
+    "rentalPeriod": "Rental Period",
+    "rentCost": "Rent",
+    "electricityCost": "Electricity",
+    "waterCost": "Water",
+    "otherFees": "Other Fees",
+    "totalCost": "Total",
+    "totalBills": "Total Bills",
+    "totalRent": "Total Rent",
+    "totalElectricity": "Total Electricity",
+    "totalWater": "Total Water",
+    "totalOtherFees": "Total Other Fees",
+    "grandTotal": "Grand Total",
+    "noBills": "No Bills Found",
+    "noBillsDescription": "No bills found for the selected month and year",
+    "pdfTitle": "Monthly Billing Summary",
+    "summaryOverview": "Summary Overview",
+    "totals": "Totals",
+    "generatedOn": "Generated on"
   }
 }
