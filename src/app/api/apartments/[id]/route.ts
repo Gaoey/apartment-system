@@ -16,7 +16,7 @@ export async function GET(
       );
     }
     return NextResponse.json({ success: true, data: apartment });
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json(
       { success: false, error: 'Failed to fetch apartment' },
       { status: 500 }
@@ -42,7 +42,7 @@ export async function PUT(
       );
     }
     return NextResponse.json({ success: true, data: apartment });
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json(
       { success: false, error: 'Failed to update apartment' },
       { status: 400 }
@@ -64,7 +64,7 @@ export async function DELETE(
       );
     }
     return NextResponse.json({ success: true, data: {} });
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json(
       { success: false, error: 'Failed to delete apartment' },
       { status: 500 }

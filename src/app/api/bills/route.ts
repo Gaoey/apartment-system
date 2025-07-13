@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
     const apartmentId = searchParams.get('apartmentId');
     const roomId = searchParams.get('roomId');
     
-    let query: any = {};
+    const query: Record<string, string> = {};
     if (apartmentId) query.apartmentId = apartmentId;
     if (roomId) query.roomId = roomId;
     
@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
       .sort({ createdAt: -1 });
     
     return NextResponse.json({ success: true, data: bills });
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json(
       { success: false, error: 'Failed to fetch bills' },
       { status: 500 }
@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const bill = await Bill.create(body);
     return NextResponse.json({ success: true, data: bill }, { status: 201 });
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json(
       { success: false, error: 'Failed to create bill' },
       { status: 400 }
