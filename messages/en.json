@@ -132,7 +132,20 @@
     "rentalPeriod": "Rental Period",
     "billingDetails": "Billing Details",
     "additionalInfo": "Additional Information",
-    "billId": "Bill ID"
+    "billId": "Bill ID",
+    "pdfTitle": "Bill PDF",
+    "printSavePDF": "Print/Save PDF",
+    "from": "From",
+    "billInformation": "Bill Information",
+    "billTo": "Bill To",
+    "description": "Description",
+    "ownerName": "Owner Name",
+    "ownerAddress": "Owner Address",
+    "ownerPhone": "Owner Phone",
+    "ownerTaxId": "Owner Tax ID",
+    "thankYou": "Thank you for your payment!",
+    "generatedOn": "Generated on",
+    "billNotFound": "Bill not found"
   },
   "validation": {
     "pleaseSelectApartment": "Please select an apartment",

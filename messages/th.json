@@ -132,7 +132,20 @@
     "rentalPeriod": "ระยะเวลาการเช่า",
     "billingDetails": "รายละเอียดการเรียกเก็บเงิน",
     "additionalInfo": "ข้อมูลเพิ่มเติม",
-    "billId": "รหัสใบแจ้งหนี้"
+    "billId": "รหัสใบแจ้งหนี้",
+    "pdfTitle": "ใบแจ้งหนี้ PDF",
+    "printSavePDF": "พิมพ์/บันทึก PDF",
+    "from": "จาก",
+    "billInformation": "ข้อมูลใบแจ้งหนี้",
+    "billTo": "ถึง",
+    "description": "รายละเอียด",
+    "ownerName": "ชื่อเจ้าของ",
+    "ownerAddress": "ที่อยู่เจ้าของ",
+    "ownerPhone": "โทรศัพท์เจ้าของ",
+    "ownerTaxId": "เลขประจำตัวผู้เสียภาษีเจ้าของ",
+    "thankYou": "ขอบคุณสำหรับการชำระเงิน!",
+    "generatedOn": "สร้างเมื่อ",
+    "billNotFound": "ไม่พบใบแจ้งหนี้"
   },
   "validation": {
     "pleaseSelectApartment": "กรุณาเลือกอพาร์ตเมนต์",
