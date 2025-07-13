@@ -1,4 +1,4 @@
-// This root layout only handles the routing structure
+// Root layout - just passes through to locale-specific layout
 export default function RootLayout({
   children,
 }: {
