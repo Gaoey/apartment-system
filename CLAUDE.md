@@ -143,3 +143,23 @@ messages/               # Translation files
 ### Environment Variables
 - `MONGODB_URI`: MongoDB connection string
 - `NEXT_PUBLIC_APP_NAME`: Application name for branding
+
+## Progress Tracking with `PROGRESS.md`
+Claude must follow this protocol when interacting with the `PROGRESS.md` file:
+### Update Protocol
+1. **Read Current State**  
+   Always read the full current content of `PROGRESS.md` before making any changes.
+2. **Validate Change Context**  
+   Make sure the update aligns with the current progress. Avoid skipping steps or overwriting newer updates.
+3. **Apply Changes Carefully**  
+   Only edit the parts of `PROGRESS.md` that are relevant to the update. Maintain formatting and structure.
+
+### Error Handling
+If Claude encounters an error or inconsistency while updating `PROGRESS.md`:
+1. **Do Not Proceed Immediately**  
+   Stop and do not apply the update.
+2. **Recheck `PROGRESS.md`**  
+   Reload and verify the current state of `PROGRESS.md`.
+3. **Synchronize and Retry**  
+   If the problem was due to a stale view, retry the update with the refreshed state. Otherwise, report or skip the update safely.
+> ⚠️ **Important:** Claude should be conservative — never assume it's safe to update without confirming with the latest content in `PROGRESS.md`.
