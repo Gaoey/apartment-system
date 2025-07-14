@@ -1,8 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import dbConnect from "@/lib/mongodb";
-import Bill from "@/models/Bill";
+import Bill, { IBill } from "@/models/Bill";
 import Room from "@/models/Room";
 import Apartment from "@/models/Apartment";
+import { IRoom } from "@/models/Room";
+import { IApartment } from "@/models/Apartment";
+
+// Type for populated bill
+interface PopulatedBill extends Omit<IBill, 'roomId' | 'apartmentId'> {
+  roomId: IRoom;
+  apartmentId: IApartment;
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -38,7 +46,7 @@ export async function GET(request: NextRequest) {
     })
       .populate("apartmentId", "name")
       .populate("roomId", "roomNumber")
-      .sort({ "roomId.roomNumber": 1, billingDate: 1 });
+      .sort({ "roomId.roomNumber": 1, billingDate: 1 }) as unknown as PopulatedBill[];
 
     // Generate bill numbers with invoice ID as running sequence
     const billsWithNumbers = bills.map((bill, index) => {

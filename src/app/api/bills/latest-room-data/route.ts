@@ -1,8 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import dbConnect from "@/lib/mongodb";
-import Bill from "@/models/Bill";
+import Bill, { IBill } from "@/models/Bill";
 import Room from "@/models/Room";
 import Apartment from "@/models/Apartment";
+import { IRoom } from "@/models/Room";
+import { IApartment } from "@/models/Apartment";
+
+// Type for populated bill
+interface PopulatedBill extends Omit<IBill, 'roomId' | 'apartmentId'> {
+  roomId: IRoom;
+  apartmentId: IApartment;
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -30,7 +38,7 @@ export async function GET(request: NextRequest) {
     })
       .populate("apartmentId", "name")
       .populate("roomId", "roomNumber")
-      .sort({ billingDate: -1, createdAt: -1 });
+      .sort({ billingDate: -1, createdAt: -1 }) as unknown as PopulatedBill;
 
     if (!latestBill) {
       // No previous bills found for this room
@@ -56,7 +64,7 @@ export async function GET(request: NextRequest) {
         $gte: startOfMonth,
         $lte: endOfMonth
       }
-    }).sort({ billingDate: -1, createdAt: -1 });
+    }).sort({ billingDate: -1, createdAt: -1 }) as IBill[];
 
     // Use tenant info from the most recent bill in current month, or fall back to latest bill
     const tenantInfoSource = currentMonthBills.length > 0 ? currentMonthBills[0] : latestBill;

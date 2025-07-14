@@ -15,7 +15,7 @@ npm install
 
 ### Development
 ```bash
-npm run dev          # Start development server on http://localhost:3000
+npm run dev          # Start development server with --turbopack on http://localhost:3000
 npm run build        # Build for production
 npm run start        # Start production server
 npm run lint         # Run ESLint
@@ -29,12 +29,14 @@ npm run lint         # Run ESLint
 ## Architecture Overview
 
 ### Tech Stack
-- **Frontend**: Next.js 15 with App Router, TypeScript, Tailwind CSS
+- **Frontend**: Next.js 15 with App Router, React 19, TypeScript
+- **Styling**: Tailwind CSS 4.0
 - **Backend**: Next.js API Routes
 - **Database**: MongoDB with Mongoose ODM
-- **PDF Generation**: jsPDF, html2canvas, @react-pdf/renderer
+- **PDF Generation**: @react-pdf/renderer, jsPDF, html2canvas, react-pdf
 - **UI Icons**: Lucide React
 - **Internationalization**: next-intl (Thai/English support)
+- **Date Handling**: date-fns
 
 ### Project Structure
 ```
@@ -65,6 +67,29 @@ src/
 messages/               # Translation files
 ├── th.json            # Thai translations
 └── en.json            # English translations
+```
+
+### Internationalization Architecture
+
+The application uses **route-based internationalization** with Thai as the default language:
+
+#### Key Components:
+1. **Middleware** (`src/middleware.ts`): Handles locale detection and routing
+2. **Route Structure**: All pages are under `/[locale]/` dynamic segment
+3. **Translation Files**: JSON files in `/messages/` directory
+4. **Language Switcher**: Client-side component for dynamic language switching
+
+#### URL Patterns:
+- `/th/apartments` - Thai version (default)
+- `/en/apartments` - English version
+- `/apartments` - Redirects to `/th/apartments`
+
+#### Usage in Components:
+```typescript
+import { useTranslations } from 'next-intl';
+
+const t = useTranslations('ComponentName');
+return <h1>{t('title')}</h1>;
 ```
 
 ### Database Models
@@ -101,6 +126,24 @@ messages/               # Translation files
 #### Bills
 - `GET /api/bills` - List bills (supports apartmentId, roomId filters)
 - `POST /api/bills` - Create new bill (auto-calculates totals)
+- `GET /api/bills/[id]` - Get bill by ID
+- `PUT /api/bills/[id]` - Update bill
+- `DELETE /api/bills/[id]` - Delete bill
+- `GET /api/bills/[id]/with-running-number` - Get bill with generated running number
+- `GET /api/bills/latest-room-data` - Get latest room data for new bill creation
+- `POST /api/bills/latest-room-data` - Update tenant info for current month bills
+- `GET /api/bills/monthly-summary` - Get monthly bill summary report
+
+#### Rooms
+- `GET /api/rooms` - List rooms (supports apartmentId filter)
+- `POST /api/rooms` - Create room
+- `GET /api/rooms/[id]` - Get room by ID
+- `PUT /api/rooms/[id]` - Update room
+- `DELETE /api/rooms/[id]` - Delete room
+
+#### Owner
+- `GET /api/owner` - Get owner information
+- `POST /api/owner` - Create/update owner information
 
 ### Key Features Implemented
 
@@ -130,6 +173,25 @@ messages/               # Translation files
 5. **TypeScript**: Strict typing with interfaces for all models and API responses
 6. **Internationalization**: Use useTranslations() hook for all user-facing text
 7. **Form Validation**: Implement comprehensive validation with localized error messages
+
+### TypeScript Patterns for MongoDB Population
+
+When using `.populate()` with Mongoose queries, create interface types for populated documents:
+
+```typescript
+// For populated documents
+interface PopulatedBill extends Omit<IBill, 'roomId' | 'apartmentId'> {
+  roomId: IRoom;
+  apartmentId: IApartment;
+}
+
+// Cast populated queries
+const bill = await Bill.findOne({})
+  .populate("apartmentId", "name")
+  .populate("roomId", "roomNumber") as unknown as PopulatedBill;
+```
+
+This pattern resolves TypeScript errors when accessing populated fields like `bill.roomId.roomNumber`.
 
 ### Future Implementation Tasks
 
