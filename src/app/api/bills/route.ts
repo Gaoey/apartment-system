@@ -15,20 +15,52 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const apartmentId = searchParams.get("apartmentId");
     const roomId = searchParams.get("roomId");
+    const month = searchParams.get("month");
+    const year = searchParams.get("year");
+    const page = parseInt(searchParams.get("page") || "1");
+    const limit = parseInt(searchParams.get("limit") || "10");
 
-    const query: Record<string, string> = {};
+    const query: Record<string, string | { $gte: Date; $lte: Date }> = {};
     if (apartmentId) query.apartmentId = apartmentId;
     if (roomId) query.roomId = roomId;
+    
+    // Add month/year filtering
+    if (month && year) {
+      const startDate = new Date(parseInt(year), parseInt(month) - 1, 1);
+      const endDate = new Date(parseInt(year), parseInt(month), 0, 23, 59, 59, 999);
+      query.billingDate = {
+        $gte: startDate,
+        $lte: endDate
+      };
+    }
 
     console.log("Fetching bills with query:", query);
+
+    // Get total count for pagination
+    const totalBills = await Bill.countDocuments(query);
+    const totalPages = Math.ceil(totalBills / limit);
+    const skip = (page - 1) * limit;
 
     const bills = await Bill.find(query)
       .populate("apartmentId", "name")
       .populate("roomId", "roomNumber")
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
 
-    console.log("Bills fetched successfully:", bills.length);
-    return NextResponse.json({ success: true, data: bills });
+    console.log("Bills fetched successfully:", bills.length, "of", totalBills);
+    
+    return NextResponse.json({ 
+      success: true, 
+      data: bills,
+      pagination: {
+        currentPage: page,
+        totalPages,
+        totalBills,
+        hasNextPage: page < totalPages,
+        hasPreviousPage: page > 1
+      }
+    });
   } catch (error: unknown) {
     console.error("Error fetching bills:", error);
     

@@ -52,7 +52,14 @@ export default function EditBillPage({ params }: { params: Promise<{ id: string;
       rate: 7,
       meterFee: 50,
     },
-    customUtilities: [] as { name: string; startMeter?: number; endMeter?: number; rate?: number; meterFee?: number; fixedAmount?: number }[],
+    water: {
+      startMeter: 0,
+      endMeter: 0,
+      rate: 15,
+      meterFee: 50,
+    },
+    airconFee: 0,
+    fridgeFee: 0,
     otherFees: [] as { description: string; amount: number }[],
   });
   
@@ -66,15 +73,6 @@ export default function EditBillPage({ params }: { params: Promise<{ id: string;
     amount: 0,
   });
   
-  const [customUtilitiesInput, setCustomUtilitiesInput] = useState({
-    name: '',
-    startMeter: 0,
-    endMeter: 0,
-    rate: 0,
-    meterFee: 0,
-    fixedAmount: 0,
-    isFixedAmount: false,
-  });
 
   useEffect(() => {
     const getParams = async () => {
@@ -124,7 +122,9 @@ export default function EditBillPage({ params }: { params: Promise<{ id: string;
           rent: bill.rent,
           discounts: bill.discounts || [],
           electricity: bill.electricity,
-          customUtilities: bill.customUtilities || [],
+          water: bill.water || { startMeter: 0, endMeter: 0, rate: 15, meterFee: 50 },
+          airconFee: bill.airconFee || 0,
+          fridgeFee: bill.fridgeFee || 0,
           otherFees: bill.otherFees || [],
         });
         setSelectedApartmentId(bill.apartmentId._id);
@@ -216,13 +216,10 @@ export default function EditBillPage({ params }: { params: Promise<{ id: string;
       newFieldErrors['electricity.endMeter'] = tv('electricityEndMeterMustBeGreaterOrEqual');
     }
 
-    // Validate custom utilities meters
-    formData.customUtilities.forEach((utility, index) => {
-      if (utility.startMeter !== undefined && utility.endMeter !== undefined && utility.endMeter < utility.startMeter) {
-        validationErrors.push(`${utility.name}: End meter must be greater than or equal to start meter`);
-        newFieldErrors[`customUtilities.${index}.endMeter`] = `End meter must be greater than or equal to start meter`;
-      }
-    });
+    if (formData.water.endMeter < formData.water.startMeter) {
+      validationErrors.push(tv('waterEndMeterMustBeGreaterOrEqual'));
+      newFieldErrors['water.endMeter'] = tv('waterEndMeterMustBeGreaterOrEqual');
+    }
 
     setFieldErrors(newFieldErrors);
     setErrors(validationErrors);
@@ -357,62 +354,18 @@ export default function EditBillPage({ params }: { params: Promise<{ id: string;
     }));
   };
 
-  const addCustomUtility = () => {
-    if (customUtilitiesInput.name.trim()) {
-      const newUtility: { name: string; startMeter?: number; endMeter?: number; rate?: number; meterFee?: number; fixedAmount?: number } = {
-        name: customUtilitiesInput.name,
-      };
-      
-      if (customUtilitiesInput.isFixedAmount) {
-        newUtility.fixedAmount = customUtilitiesInput.fixedAmount;
-      } else {
-        newUtility.startMeter = customUtilitiesInput.startMeter;
-        newUtility.endMeter = customUtilitiesInput.endMeter;
-        newUtility.rate = customUtilitiesInput.rate;
-        newUtility.meterFee = customUtilitiesInput.meterFee;
-      }
-      
-      setFormData(prev => ({
-        ...prev,
-        customUtilities: [...prev.customUtilities, newUtility],
-      }));
-      setCustomUtilitiesInput({
-        name: '',
-        startMeter: 0,
-        endMeter: 0,
-        rate: 0,
-        meterFee: 0,
-        fixedAmount: 0,
-        isFixedAmount: false,
-      });
-    }
-  };
-
-  const removeCustomUtility = (index: number) => {
-    setFormData(prev => ({
-      ...prev,
-      customUtilities: prev.customUtilities.filter((_, i) => i !== index),
-    }));
-  };
 
   const calculatePreview = () => {
     const discountsTotal = formData.discounts.reduce((sum, discount) => sum + discount.amount, 0);
     const netRent = formData.rent - discountsTotal;
     const electricityCost = (formData.electricity.endMeter - formData.electricity.startMeter) * formData.electricity.rate + formData.electricity.meterFee;
     
-    const customUtilitiesCost = formData.customUtilities.reduce((sum, utility) => {
-      if (utility.fixedAmount !== undefined) {
-        return sum + utility.fixedAmount;
-      } else if (utility.startMeter !== undefined && utility.endMeter !== undefined && utility.rate !== undefined) {
-        return sum + (utility.endMeter - utility.startMeter) * utility.rate + (utility.meterFee || 0);
-      }
-      return sum;
-    }, 0);
+    const waterCost = (formData.water.endMeter - formData.water.startMeter) * formData.water.rate + formData.water.meterFee;
     
     const otherFeesTotal = formData.otherFees.reduce((sum, fee) => sum + fee.amount, 0);
-    const grandTotal = netRent + electricityCost + customUtilitiesCost + otherFeesTotal;
+    const grandTotal = netRent + electricityCost + waterCost + formData.airconFee + formData.fridgeFee + otherFeesTotal;
 
-    return { netRent, electricityCost, customUtilitiesCost, otherFeesTotal, grandTotal, discountsTotal };
+    return { discountsTotal, netRent, electricityCost, waterCost, otherFeesTotal, grandTotal };
   };
 
   const preview = calculatePreview();
@@ -764,128 +717,114 @@ export default function EditBillPage({ params }: { params: Promise<{ id: string;
                     </div>
 
                     <div>
-                      <h4 className="font-medium mb-3">{t('customUtilities')}</h4>
-                      {formData.customUtilities.length > 0 && (
-                        <div className="space-y-3 mb-4">
-                          {formData.customUtilities.map((utility, index) => (
-                            <div key={index} className="p-4 bg-gray-50 rounded-md">
-                              <div className="flex items-center justify-between mb-2">
-                                <h6 className="font-medium text-gray-700">{utility.name}</h6>
-                                <button
-                                  type="button"
-                                  onClick={() => removeCustomUtility(index)}
-                                  className="text-red-600 hover:text-red-800 p-1"
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </button>
-                              </div>
-                              {utility.fixedAmount !== undefined ? (
-                                <div className="text-sm text-gray-600">
-                                  Fixed amount: ฿{utility.fixedAmount.toLocaleString()}
-                                </div>
-                              ) : (
-                                <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 text-sm text-gray-600">
-                                  <div>Start: {utility.startMeter}</div>
-                                  <div>End: {utility.endMeter}</div>
-                                  <div>Rate: ฿{utility.rate}</div>
-                                  <div>Fee: ฿{utility.meterFee || 0}</div>
-                                </div>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                      
-                      <div className="space-y-4 p-4 bg-blue-50 rounded-md">
+                      <h4 className="font-medium mb-3">{t('water')}</h4>
+                      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
                         <div>
-                          <input
-                            type="text"
-                            placeholder="Utility name (e.g., Water, Air Conditioning)"
-                            value={customUtilitiesInput.name}
-                            onChange={(e) => setCustomUtilitiesInput(prev => ({ ...prev, name: e.target.value }))}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          />
-                        </div>
-                        
-                        <div className="flex items-center gap-3">
-                          <label className="flex items-center">
-                            <input
-                              type="checkbox"
-                              checked={customUtilitiesInput.isFixedAmount}
-                              onChange={(e) => setCustomUtilitiesInput(prev => ({ ...prev, isFixedAmount: e.target.checked }))}
-                              className="mr-2"
-                            />
-                            Fixed amount
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            {t('startMeter')}
                           </label>
+                          <input
+                            type="number"
+                            name="water.startMeter"
+                            value={formData.water.startMeter}
+                            onChange={handleChange}
+                            min="0"
+                            step="0.01"
+                            className={getInputClassName('water.startMeter', 'w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:border-transparent')}
+                          />
+                          {getFieldError('water.startMeter') && (
+                            <p className="mt-1 text-sm text-red-600">{getFieldError('water.startMeter')}</p>
+                          )}
                         </div>
-                        
-                        {customUtilitiesInput.isFixedAmount ? (
-                          <div>
-                            <input
-                              type="number"
-                              placeholder="Fixed amount"
-                              value={customUtilitiesInput.fixedAmount}
-                              onChange={(e) => setCustomUtilitiesInput(prev => ({ ...prev, fixedAmount: parseFloat(e.target.value) || 0 }))}
-                              min="0"
-                              step="0.01"
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            />
-                          </div>
-                        ) : (
-                          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                            <input
-                              type="number"
-                              placeholder="Start meter"
-                              value={customUtilitiesInput.startMeter}
-                              onChange={(e) => setCustomUtilitiesInput(prev => ({ ...prev, startMeter: parseFloat(e.target.value) || 0 }))}
-                              min="0"
-                              step="0.01"
-                              className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            />
-                            <input
-                              type="number"
-                              placeholder="End meter"
-                              value={customUtilitiesInput.endMeter}
-                              onChange={(e) => setCustomUtilitiesInput(prev => ({ ...prev, endMeter: parseFloat(e.target.value) || 0 }))}
-                              min="0"
-                              step="0.01"
-                              className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            />
-                            <input
-                              type="number"
-                              placeholder="Rate per unit"
-                              value={customUtilitiesInput.rate}
-                              onChange={(e) => setCustomUtilitiesInput(prev => ({ ...prev, rate: parseFloat(e.target.value) || 0 }))}
-                              min="0"
-                              step="0.01"
-                              className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            />
-                            <input
-                              type="number"
-                              placeholder="Meter fee"
-                              value={customUtilitiesInput.meterFee}
-                              onChange={(e) => setCustomUtilitiesInput(prev => ({ ...prev, meterFee: parseFloat(e.target.value) || 0 }))}
-                              min="0"
-                              step="0.01"
-                              className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            />
-                          </div>
-                        )}
-                        
-                        <button
-                          type="button"
-                          onClick={addCustomUtility}
-                          className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center justify-center gap-2"
-                        >
-                          <Plus className="w-4 h-4" />
-                          Add Custom Utility
-                        </button>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            {t('endMeter')}
+                          </label>
+                          <input
+                            type="number"
+                            name="water.endMeter"
+                            value={formData.water.endMeter}
+                            onChange={handleChange}
+                            min="0"
+                            step="0.01"
+                            className={getInputClassName('water.endMeter', 'w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:border-transparent')}
+                          />
+                          {getFieldError('water.endMeter') && (
+                            <p className="mt-1 text-sm text-red-600">{getFieldError('water.endMeter')}</p>
+                          )}
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            {t('rate')} ({t('thb')}/{t('waterUnit')})
+                          </label>
+                          <input
+                            type="number"
+                            name="water.rate"
+                            value={formData.water.rate}
+                            onChange={handleChange}
+                            min="0"
+                            step="0.01"
+                            className={getInputClassName('water.rate', 'w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:border-transparent')}
+                          />
+                          {getFieldError('water.rate') && (
+                            <p className="mt-1 text-sm text-red-600">{getFieldError('water.rate')}</p>
+                          )}
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            {t('meterFee')} ({t('thb')})
+                          </label>
+                          <input
+                            type="number"
+                            name="water.meterFee"
+                            value={formData.water.meterFee}
+                            onChange={handleChange}
+                            min="0"
+                            step="0.01"
+                            className={getInputClassName('water.meterFee', 'w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:border-transparent')}
+                          />
+                          {getFieldError('water.meterFee') && (
+                            <p className="mt-1 text-sm text-red-600">{getFieldError('water.meterFee')}</p>
+                          )}
+                        </div>
                       </div>
                     </div>
 
                     <div>
+                      <h4 className="font-medium mb-3">{t('otherFees')}</h4>
+                      <div className="grid md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            {t('airconFee')} ({t('thb')})
+                          </label>
+                          <input
+                            type="number"
+                            name="airconFee"
+                            value={formData.airconFee}
+                            onChange={handleChange}
+                            min="0"
+                            step="0.01"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            {t('fridgeFee')} ({t('thb')})
+                          </label>
+                          <input
+                            type="number"
+                            name="fridgeFee"
+                            value={formData.fridgeFee}
+                            onChange={handleChange}
+                            min="0"
+                            step="0.01"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          />
+                        </div>
+                      </div>
+
                       <div className="border-t pt-4">
-                        <h5 className="font-medium mb-3">{t('otherFees')}</h5>
+                        <h5 className="font-medium mb-3">{t('additionalOtherFees')}</h5>
                         
                         {formData.otherFees.length > 0 && (
                           <div className="space-y-2 mb-4">
@@ -977,28 +916,20 @@ export default function EditBillPage({ params }: { params: Promise<{ id: string;
                       <span>{t('electricity')} ({(formData.electricity.endMeter - formData.electricity.startMeter).toFixed(1)} {t('electricityUnit')}):</span>
                       <span>฿{preview.electricityCost.toLocaleString()}</span>
                     </div>
-                    {formData.customUtilities.length > 0 && (
-                      <div className="space-y-1">
-                        {formData.customUtilities.map((utility, index) => {
-                          let cost = 0;
-                          if (utility.fixedAmount !== undefined) {
-                            cost = utility.fixedAmount;
-                          } else if (utility.startMeter !== undefined && utility.endMeter !== undefined && utility.rate !== undefined) {
-                            cost = (utility.endMeter - utility.startMeter) * utility.rate + (utility.meterFee || 0);
-                          }
-                          return (
-                            <div key={index} className="flex justify-between text-sm">
-                              <span>{utility.name}:</span>
-                              <span>฿{cost.toLocaleString()}</span>
-                            </div>
-                          );
-                        })}
+                    <div className="flex justify-between">
+                      <span>{t('water')} ({(formData.water.endMeter - formData.water.startMeter).toFixed(1)} {t('waterUnit')}):</span>
+                      <span>฿{preview.waterCost.toLocaleString()}</span>
+                    </div>
+                    {formData.airconFee > 0 && (
+                      <div className="flex justify-between">
+                        <span>{t('airconFee')}:</span>
+                        <span>฿{formData.airconFee.toLocaleString()}</span>
                       </div>
                     )}
-                    {preview.customUtilitiesCost > 0 && (
-                      <div className="flex justify-between font-medium">
-                        <span>{t('totalCustomUtilities')}:</span>
-                        <span>฿{preview.customUtilitiesCost.toLocaleString()}</span>
+                    {formData.fridgeFee > 0 && (
+                      <div className="flex justify-between">
+                        <span>{t('fridgeFee')}:</span>
+                        <span>฿{formData.fridgeFee.toLocaleString()}</span>
                       </div>
                     )}
                     {formData.otherFees.length > 0 && (

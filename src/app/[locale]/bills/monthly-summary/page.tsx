@@ -2,7 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
-import { Calendar, Download, FileText } from 'lucide-react';
+import { Calendar, Download, FileText, Building } from 'lucide-react';
+
+interface Apartment {
+  _id: string;
+  name: string;
+}
 
 interface BillSummary {
   _id: string;
@@ -16,7 +21,7 @@ interface BillSummary {
   };
   rent: number;
   electricityCost: number;
-  waterCost: number;
+  customUtilitiesCost: number;
   otherFeesTotal: number;
   grandTotal: number;
   billingDate: string;
@@ -30,7 +35,7 @@ interface MonthlySummaryData {
     totalBills: number;
     totalRent: number;
     totalElectricity: number;
-    totalWater: number;
+    totalCustomUtilities: number;
     totalOtherFees: number;
     grandTotal: number;
   };
@@ -44,11 +49,33 @@ export default function MonthlySummaryPage() {
   const [data, setData] = useState<MonthlySummaryData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [apartments, setApartments] = useState<Apartment[]>([]);
+  const [apartmentsLoading, setApartmentsLoading] = useState(true);
   
   // Default to current month and year
   const currentDate = new Date();
   const [selectedMonth, setSelectedMonth] = useState(currentDate.getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(currentDate.getFullYear());
+  const [selectedApartmentId, setSelectedApartmentId] = useState<string>('');
+
+  const fetchApartments = async () => {
+    try {
+      const response = await fetch('/api/apartments');
+      const result = await response.json();
+      
+      if (result.success) {
+        setApartments(result.data);
+        // Set first apartment as default if no apartment is selected
+        if (result.data.length > 0 && !selectedApartmentId) {
+          setSelectedApartmentId(result.data[0]._id);
+        }
+      }
+    } catch (err) {
+      console.error('Error fetching apartments:', err);
+    } finally {
+      setApartmentsLoading(false);
+    }
+  };
 
   const fetchMonthlySummary = async () => {
     if (!selectedMonth || !selectedYear) return;
@@ -57,9 +84,12 @@ export default function MonthlySummaryPage() {
     setError(null);
     
     try {
-      const response = await fetch(
-        `/api/bills/monthly-summary?month=${selectedMonth}&year=${selectedYear}`
-      );
+      let url = `/api/bills/monthly-summary?month=${selectedMonth}&year=${selectedYear}`;
+      if (selectedApartmentId) {
+        url += `&apartmentId=${selectedApartmentId}`;
+      }
+      
+      const response = await fetch(url);
       const result = await response.json();
       
       if (result.success) {
@@ -76,8 +106,14 @@ export default function MonthlySummaryPage() {
   };
 
   useEffect(() => {
-    fetchMonthlySummary();
-  }, [selectedMonth, selectedYear]);
+    fetchApartments();
+  }, []);
+
+  useEffect(() => {
+    if (!apartmentsLoading) {
+      fetchMonthlySummary();
+    }
+  }, [selectedMonth, selectedYear, selectedApartmentId, apartmentsLoading]);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat(locale === 'th' ? 'th-TH' : 'en-US', {
@@ -151,37 +187,62 @@ export default function MonthlySummaryPage() {
         </div>
 
         <div className="p-6">
-          {/* Month/Year Selection */}
-          <div className="flex flex-col md:flex-row gap-4 mb-6">
-            <div className="flex items-center gap-2">
-              <Calendar className="w-5 h-5 text-gray-500" />
-              <label className="font-medium text-gray-700">{t('selectMonth')}:</label>
-            </div>
-            
-            <div className="flex gap-2">
-              <select
-                value={selectedMonth}
-                onChange={(e) => setSelectedMonth(Number(e.target.value))}
-                className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                {months.map(month => (
-                  <option key={month} value={month}>
-                    {getMonthName(month)}
-                  </option>
-                ))}
-              </select>
+          {/* Filter Selection */}
+          <div className="grid md:grid-cols-2 gap-6 mb-6">
+            {/* Apartment Selection */}
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center gap-2">
+                <Building className="w-5 h-5 text-gray-500" />
+                <label className="font-medium text-gray-700">{t('selectApartment')}:</label>
+              </div>
               
               <select
-                value={selectedYear}
-                onChange={(e) => setSelectedYear(Number(e.target.value))}
-                className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                value={selectedApartmentId}
+                onChange={(e) => setSelectedApartmentId(e.target.value)}
+                disabled={apartmentsLoading}
+                className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
               >
-                {years.map(year => (
-                  <option key={year} value={year}>
-                    {year}
+                <option value="">{apartmentsLoading ? tc('loading') : t('allApartments')}</option>
+                {apartments.map(apartment => (
+                  <option key={apartment._id} value={apartment._id}>
+                    {apartment.name}
                   </option>
                 ))}
               </select>
+            </div>
+
+            {/* Month/Year Selection */}
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center gap-2">
+                <Calendar className="w-5 h-5 text-gray-500" />
+                <label className="font-medium text-gray-700">{t('selectMonth')}:</label>
+              </div>
+              
+              <div className="flex gap-2">
+                <select
+                  value={selectedMonth}
+                  onChange={(e) => setSelectedMonth(Number(e.target.value))}
+                  className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  {months.map(month => (
+                    <option key={month} value={month}>
+                      {getMonthName(month)}
+                    </option>
+                  ))}
+                </select>
+                
+                <select
+                  value={selectedYear}
+                  onChange={(e) => setSelectedYear(Number(e.target.value))}
+                  className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  {years.map(year => (
+                    <option key={year} value={year}>
+                      {year}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
           </div>
 
@@ -222,8 +283,8 @@ export default function MonthlySummaryPage() {
                     <div className="font-semibold">{formatCurrency(data.summary.totalElectricity)}</div>
                   </div>
                   <div>
-                    <span className="text-gray-600">{t('totalWater')}:</span>
-                    <div className="font-semibold">{formatCurrency(data.summary.totalWater)}</div>
+                    <span className="text-gray-600">{t('totalCustomUtilities')}:</span>
+                    <div className="font-semibold">{formatCurrency(data.summary.totalCustomUtilities)}</div>
                   </div>
                   <div>
                     <span className="text-gray-600">{t('totalOtherFees')}:</span>
@@ -261,7 +322,7 @@ export default function MonthlySummaryPage() {
                           {t('electricityCost')}
                         </th>
                         <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          {t('waterCost')}
+                          {t('customUtilitiesCost')}
                         </th>
                         <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                           {t('otherFees')}
@@ -293,7 +354,7 @@ export default function MonthlySummaryPage() {
                             {formatCurrency(bill.electricityCost)}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                            {formatCurrency(bill.waterCost)}
+                            {formatCurrency(bill.customUtilitiesCost)}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
                             {formatCurrency(bill.otherFeesTotal)}

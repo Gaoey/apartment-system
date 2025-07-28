@@ -23,6 +23,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const month = searchParams.get("month");
     const year = searchParams.get("year");
+    const apartmentId = searchParams.get("apartmentId");
 
     if (!month || !year) {
       return NextResponse.json(
@@ -37,13 +38,26 @@ export async function GET(request: NextRequest) {
 
     console.log("Fetching monthly summary for:", { month, year, startDate, endDate });
 
-    // Find all bills within the month range
-    const bills = await Bill.find({
+    // Build query with apartment filter if provided
+    const query: {
+      billingDate: {
+        $gte: Date;
+        $lte: Date;
+      };
+      apartmentId?: string;
+    } = {
       billingDate: {
         $gte: startDate,
         $lte: endDate
       }
-    })
+    };
+
+    if (apartmentId) {
+      query.apartmentId = apartmentId;
+    }
+
+    // Find all bills within the month range and apartment filter
+    const bills = await Bill.find(query)
       .populate("apartmentId", "name")
       .populate("roomId", "roomNumber")
       .sort({ "roomId.roomNumber": 1, billingDate: 1 }) as unknown as PopulatedBill[];

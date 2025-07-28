@@ -42,7 +42,7 @@ interface Bill {
     description: string;
     amount: number;
   }>;
-  electricity: {
+  electricity?: {
     startMeter: number;
     endMeter: number;
     rate: number;
@@ -303,9 +303,15 @@ export default function BillPDFPage({
                     <div className="grid grid-cols-2 gap-4 py-1 border-b border-gray-200">
                       <div>
                         <span className="font-medium">{locale === "th" ? "ไฟฟ้า" : "Electric"}</span>
-                        <span className="text-[10px] text-gray-500 block">
-                          {(bill.electricity.endMeter - bill.electricity.startMeter).toFixed(0)}u × {bill.electricity.rate} + {bill.electricity.meterFee}
-                        </span>
+                        {bill.electricity && bill.electricity.endMeter !== undefined && bill.electricity.startMeter !== undefined ? (
+                          <span className="text-[10px] text-gray-500 block">
+                            {(bill.electricity.endMeter - bill.electricity.startMeter).toFixed(0)}u × {bill.electricity.rate} + {bill.electricity.meterFee}
+                          </span>
+                        ) : (
+                          <span className="text-[10px] text-gray-500 block">
+                            N/A
+                          </span>
+                        )}
                       </div>
                       <div className="text-right">
                         <span className="font-medium">{bill.electricityCost.toLocaleString()}</span>

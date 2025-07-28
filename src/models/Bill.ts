@@ -24,21 +24,21 @@ export interface IBill extends Document {
     rate: number;
     meterFee: number;
   };
-  customUtilities: Array<{
-    name: string;
-    startMeter?: number;
-    endMeter?: number;
-    rate?: number;
-    meterFee?: number;
-    fixedAmount?: number;
-  }>;
+  water: {
+    startMeter: number;
+    endMeter: number;
+    rate: number;
+    meterFee: number;
+  };
+  airconFee: number;
+  fridgeFee: number;
   otherFees: Array<{
     description: string;
     amount: number;
   }>;
   netRent: number;
   electricityCost: number;
-  customUtilitiesCost: number;
+  waterCost: number;
   grandTotal: number;
   documentNumber?: string;
   createdAt: Date;
@@ -134,22 +134,20 @@ const BillSchema: Schema = new Schema(
         min: 0,
       },
     },
-    customUtilities: [{
-      name: {
-        type: String,
-        required: [true, 'Utility name is required'],
-        trim: true,
-      },
+    water: {
       startMeter: {
         type: Number,
+        required: [true, 'Water start meter is required'],
         min: 0,
       },
       endMeter: {
         type: Number,
+        required: [true, 'Water end meter is required'],
         min: 0,
       },
       rate: {
         type: Number,
+        required: [true, 'Water rate is required'],
         min: 0,
       },
       meterFee: {
@@ -157,11 +155,17 @@ const BillSchema: Schema = new Schema(
         default: 0,
         min: 0,
       },
-      fixedAmount: {
-        type: Number,
-        min: 0,
-      },
-    }],
+    },
+    airconFee: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    fridgeFee: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
     otherFees: [{
       description: {
         type: String,
@@ -182,7 +186,7 @@ const BillSchema: Schema = new Schema(
       type: Number,
       default: 0,
     },
-    customUtilitiesCost: {
+    waterCost: {
       type: Number,
       default: 0,
     },
@@ -204,18 +208,10 @@ BillSchema.pre('save', function (this: IBill, next) {
   const discountsTotal = this.discounts.reduce((sum, discount) => sum + discount.amount, 0);
   this.netRent = this.rent - discountsTotal;
   this.electricityCost = (this.electricity.endMeter - this.electricity.startMeter) * this.electricity.rate + this.electricity.meterFee;
-  
-  this.customUtilitiesCost = this.customUtilities.reduce((sum, utility) => {
-    if (utility.fixedAmount !== undefined) {
-      return sum + utility.fixedAmount;
-    } else if (utility.startMeter !== undefined && utility.endMeter !== undefined && utility.rate !== undefined) {
-      return sum + (utility.endMeter - utility.startMeter) * utility.rate + (utility.meterFee || 0);
-    }
-    return sum;
-  }, 0);
+  this.waterCost = (this.water.endMeter - this.water.startMeter) * this.water.rate + this.water.meterFee;
   
   const otherFeesTotal = this.otherFees.reduce((sum, fee) => sum + fee.amount, 0);
-  this.grandTotal = this.netRent + this.electricityCost + this.customUtilitiesCost + otherFeesTotal;
+  this.grandTotal = this.netRent + this.electricityCost + this.waterCost + this.airconFee + this.fridgeFee + otherFeesTotal;
   next();
 });
 
