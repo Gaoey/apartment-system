@@ -64,7 +64,6 @@ export default function NewBillPage() {
       fridgeFee: number;
     };
     lastBillDate: string;
-    hasCurrentMonthBills: boolean;
   } | null>(null);
   const [showAutoFillNotice, setShowAutoFillNotice] = useState(false);
   const [autoFilledFields, setAutoFilledFields] = useState<string[]>([]);
@@ -319,39 +318,9 @@ export default function NewBillPage() {
     return validationErrors.length === 0;
   };
 
-  const updateCurrentMonthTenantInfo = async () => {
-    if (!formData.roomId || !autoFillData) return;
-
-    // Check if tenant info has changed from the auto-filled data
-    const tenantInfoChanged =
-      formData.tenantName !== autoFillData.tenantInfo.tenantName ||
-      formData.tenantAddress !== autoFillData.tenantInfo.tenantAddress ||
-      formData.tenantPhone !== autoFillData.tenantInfo.tenantPhone ||
-      formData.tenantTaxId !== autoFillData.tenantInfo.tenantTaxId;
-
-    if (tenantInfoChanged && autoFillData.hasCurrentMonthBills) {
-      try {
-        await fetch("/api/bills/latest-room-data", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            roomId: formData.roomId,
-            tenantInfo: {
-              tenantName: formData.tenantName,
-              tenantAddress: formData.tenantAddress,
-              tenantPhone: formData.tenantPhone,
-              tenantTaxId: formData.tenantTaxId,
-            },
-            updateCurrentMonth: true,
-          }),
-        });
-      } catch (error) {
-        console.error("Error updating current month tenant info:", error);
-      }
-    }
-  };
+  // REMOVED: updateCurrentMonthTenantInfo function
+  // Historical bills should NEVER be modified when tenant information changes
+  // Each bill represents a point-in-time record and must remain unchanged
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -366,9 +335,6 @@ export default function NewBillPage() {
 
     try {
       console.log("Sending bill data:", formData);
-
-      // Update tenant info for current month bills if changed
-      await updateCurrentMonthTenantInfo();
 
       const response = await fetch("/api/bills", {
         method: "POST",
@@ -577,14 +543,8 @@ export default function NewBillPage() {
                     {new Date(autoFillData.lastBillDate).toLocaleDateString(
                       locale === "th" ? "th-TH" : "en-US"
                     )}
-                    .
+                    . You can modify this information as needed for the new bill.
                   </p>
-                  {autoFillData.hasCurrentMonthBills && (
-                    <p className="text-green-700 text-sm font-medium">
-                      ⚠️ Note: Changing tenant information will update all bills
-                      for this room in the current month.
-                    </p>
-                  )}
                 </div>
                 <button
                   type="button"

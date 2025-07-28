@@ -51,23 +51,8 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Get all bills for this room in the current month to check for tenant info updates
-    const currentDate = new Date();
-    const currentYear = currentDate.getFullYear();
-    const currentMonth = currentDate.getMonth();
-    const startOfMonth = new Date(currentYear, currentMonth, 1);
-    const endOfMonth = new Date(currentYear, currentMonth + 1, 0, 23, 59, 59, 999);
-
-    const currentMonthBills = await Bill.find({
-      roomId: roomId,
-      billingDate: {
-        $gte: startOfMonth,
-        $lte: endOfMonth
-      }
-    }).sort({ billingDate: -1, createdAt: -1 }) as IBill[];
-
-    // Use tenant info from the most recent bill in current month, or fall back to latest bill
-    const tenantInfoSource = currentMonthBills.length > 0 ? currentMonthBills[0] : latestBill;
+    // Use tenant info from the latest bill (no automatic updates to preserve history)
+    const tenantInfoSource = latestBill;
 
     const responseData = {
       hasData: true,
@@ -109,9 +94,7 @@ export async function GET(request: NextRequest) {
       
       // Metadata
       lastBillDate: latestBill.billingDate,
-      lastBillId: latestBill._id,
-      hasCurrentMonthBills: currentMonthBills.length > 0,
-      currentMonthBillsCount: currentMonthBills.length
+      lastBillId: latestBill._id
     };
 
     console.log("Latest room data fetched successfully");
@@ -129,72 +112,6 @@ export async function GET(request: NextRequest) {
     
     return NextResponse.json(
       { success: false, error: "Failed to fetch latest room data", details: errorMessage },
-      { status: 500 }
-    );
-  }
-}
-
-// POST endpoint to update tenant info for current month bills
-export async function POST(request: NextRequest) {
-  try {
-    await dbConnect();
-    
-    const body = await request.json();
-    const { roomId, tenantInfo, updateCurrentMonth } = body;
-
-    if (!roomId || !tenantInfo || !updateCurrentMonth) {
-      return NextResponse.json(
-        { success: false, error: "Room ID, tenant info, and updateCurrentMonth flag are required" },
-        { status: 400 }
-      );
-    }
-
-    console.log("Updating tenant info for current month bills:", { roomId, updateCurrentMonth });
-
-    // Get current month date range
-    const currentDate = new Date();
-    const currentYear = currentDate.getFullYear();
-    const currentMonth = currentDate.getMonth();
-    const startOfMonth = new Date(currentYear, currentMonth, 1);
-    const endOfMonth = new Date(currentYear, currentMonth + 1, 0, 23, 59, 59, 999);
-
-    // Update all bills in current month for this room
-    const updateResult = await Bill.updateMany(
-      {
-        roomId: roomId,
-        billingDate: {
-          $gte: startOfMonth,
-          $lte: endOfMonth
-        }
-      },
-      {
-        $set: {
-          tenantName: tenantInfo.tenantName,
-          tenantAddress: tenantInfo.tenantAddress,
-          tenantPhone: tenantInfo.tenantPhone,
-          tenantTaxId: tenantInfo.tenantTaxId
-        }
-      }
-    );
-
-    console.log("Tenant info update result:", updateResult);
-
-    return NextResponse.json({
-      success: true,
-      data: {
-        updatedCount: updateResult.modifiedCount,
-        matchedCount: updateResult.matchedCount
-      }
-    });
-  } catch (error: unknown) {
-    console.error("Error updating tenant info:", error);
-    
-    const errorMessage = error && typeof error === 'object' && 'message' in error && typeof error.message === 'string' 
-      ? error.message 
-      : 'Unknown error occurred';
-    
-    return NextResponse.json(
-      { success: false, error: "Failed to update tenant info", details: errorMessage },
       { status: 500 }
     );
   }
