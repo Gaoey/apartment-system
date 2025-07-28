@@ -28,6 +28,8 @@
     "subtitle": "Manage apartments, rooms, tenants, and generate billing invoices",
     "manageApartments": "Manage Apartments",
     "manageApartmentsDesc": "Create, update, and manage apartment buildings and rooms",
+    "manageOwners": "Manage Owners",
+    "manageOwnersDesc": "Create and manage property owners for apartments",
     "billingManagement": "Billing Management",
     "billingManagementDesc": "Generate bills, track payments, and export PDF invoices",
     "ownerSettings": "Owner Settings",
@@ -56,7 +58,11 @@
     "updating": "Updating...",
     "deleteConfirm": "Are you sure you want to delete this apartment?",
     "saved": "Saved successfully",
-    "deleted": "Deleted successfully"
+    "deleted": "Deleted successfully",
+    "selectOwners": "Select Owners",
+    "noOwnersAvailable": "No owners available",
+    "createOwnerFirst": "Create owner first",
+    "selectedOwners": "Selected owners"
   },
   "rooms": {
     "title": "Manage Rooms",
@@ -69,7 +75,27 @@
     "createBill": "Create Bill",
     "addRoom": "Add Room",
     "room": "Room",
-    "deleteConfirm": "Are you sure you want to delete this room?"
+    "deleteConfirm": "Are you sure you want to delete this room?",
+    "noTenant": "No tenant"
+  },
+  "owners": {
+    "title": "Manage Owners",
+    "addNew": "Add New Owner",
+    "createNew": "Create New Owner",
+    "editOwner": "Edit Owner",
+    "name": "Owner Name",
+    "address": "Owner Address",
+    "phone": "Owner Phone",
+    "taxId": "Tax ID",
+    "apartments": "Apartments",
+    "noOwners": "No owners",
+    "noOwnersDesc": "You haven't created any owners yet. Start by adding your first owner.",
+    "ownerInfo": "Owner Information",
+    "creating": "Creating...",
+    "updating": "Updating...",
+    "deleteConfirm": "Are you sure you want to delete owner",
+    "cannotDeleteWithApartments": "Cannot delete owner with associated apartments",
+    "deleting": "Deleting..."
   },
   "bills": {
     "title": "Manage Bills",
@@ -84,7 +110,11 @@
     "apartment": "Apartment",
     "room": "Room",
     "billNotFound": "Bill not found",
-    "billDetails": "Bill Details"
+    "billDetails": "Bill Details",
+    "filterByApartment": "Filter by Apartment",
+    "allApartments": "All Apartments",
+    "clearFilter": "Clear Filter",
+    "rentalPeriod": "Rental Period"
   },
   "bill": {
     "title": "Bill",
@@ -125,6 +155,7 @@
     "feeDescription": "Fee Description",
     "amount": "Amount",
     "totalOtherFees": "Total Other Fees",
+    "customUtilities": "Custom Utilities",
     "grandTotal": "Grand Total",
     "currency": "THB",
     "thb": "THB",
@@ -149,7 +180,11 @@
     "ownerTaxId": "Owner Tax ID",
     "thankYou": "Thank you for your payment!",
     "generatedOn": "Generated on",
-    "billNotFound": "Bill not found"
+    "billNotFound": "Bill not found",
+    "discountDescription": "Discount Description",
+    "totalDiscounts": "Total Discounts",
+    "discounts": "Discounts",
+    "totalCustomUtilities": "Total Custom Utilities"
   },
   "validation": {
     "pleaseSelectApartment": "Please select an apartment",
@@ -168,11 +203,16 @@
     "unknownErrorOccurred": "Unknown error occurred while creating bill",
     "networkError": "Network error: Unable to create bill. Please check your connection and try again.",
     "fieldRequired": "This field is required",
-    "invalidInput": "Invalid input"
+    "invalidInput": "Invalid input",
+    "ownerNameRequired": "Owner name is required",
+    "ownerAddressRequired": "Owner address is required",
+    "ownerPhoneRequired": "Owner phone is required",
+    "ownerTaxIdRequired": "Owner tax ID is required"
   },
   "placeholder": {
     "feeDescription": "Fee description",
-    "amount": "Amount"
+    "amount": "Amount",
+    "discountDescription": "Discount description"
   },
   "settings": {
     "title": "Owner Settings",

@@ -28,6 +28,8 @@
     "subtitle": "จัดการอพาร์ตเมนต์ ห้องพัก ผู้เช่า และสร้างใบแจ้งหนี้",
     "manageApartments": "จัดการอพาร์ตเมนต์",
     "manageApartmentsDesc": "สร้าง อัปเดต และจัดการอาคารอพาร์ตเมนต์และห้องพัก",
+    "manageOwners": "จัดการเจ้าของ",
+    "manageOwnersDesc": "สร้างและจัดการเจ้าของอสังหาริมทรัพย์สำหรับอพาร์ตเมนต์",
     "billingManagement": "จัดการใบแจ้งหนี้",
     "billingManagementDesc": "สร้างใบแจ้งหนี้ ติดตามการชำระเงิน และส่งออกใบแจ้งหนี้ PDF",
     "ownerSettings": "ตั้งค่าเจ้าของ",
@@ -56,7 +58,11 @@
     "updating": "กำลังอัปเดต...",
     "deleteConfirm": "คุณแน่ใจหรือไม่ที่ต้องการลบอพาร์ตเมนต์นี้?",
     "saved": "บันทึกสำเร็จ",
-    "deleted": "ลบสำเร็จ"
+    "deleted": "ลบสำเร็จ",
+    "selectOwners": "เลือกเจ้าของ",
+    "noOwnersAvailable": "ไม่มีเจ้าของ",
+    "createOwnerFirst": "สร้างเจ้าของก่อน",
+    "selectedOwners": "เจ้าของที่เลือก"
   },
   "rooms": {
     "title": "จัดการห้อง",
@@ -69,7 +75,27 @@
     "createBill": "สร้างใบแจ้งหนี้",
     "addRoom": "เพิ่มห้อง",
     "room": "ห้อง",
-    "deleteConfirm": "คุณแน่ใจหรือไม่ที่ต้องการลบห้องนี้?"
+    "deleteConfirm": "คุณแน่ใจหรือไม่ที่ต้องการลบห้องนี้?",
+    "noTenant": "ไม่มีผู้เช่า"
+  },
+  "owners": {
+    "title": "จัดการเจ้าของ",
+    "addNew": "เพิ่มเจ้าของใหม่",
+    "createNew": "สร้างเจ้าของใหม่",
+    "editOwner": "แก้ไขเจ้าของ",
+    "name": "ชื่อเจ้าของ",
+    "address": "ที่อยู่เจ้าของ",
+    "phone": "โทรศัพท์เจ้าของ",
+    "taxId": "เลขประจำตัวผู้เสียภาษี",
+    "apartments": "อพาร์ตเมนต์",
+    "noOwners": "ไม่มีเจ้าของ",
+    "noOwnersDesc": "คุณยังไม่ได้สร้างเจ้าของ เริ่มต้นโดยการเพิ่มเจ้าของคนแรกของคุณ",
+    "ownerInfo": "ข้อมูลเจ้าของ",
+    "creating": "กำลังสร้าง...",
+    "updating": "กำลังอัปเดต...",
+    "deleteConfirm": "คุณแน่ใจหรือไม่ที่ต้องการลบเจ้าของ",
+    "cannotDeleteWithApartments": "ไม่สามารถลบเจ้าของที่มีอพาร์ตเมนต์ได้",
+    "deleting": "กำลังลบ..."
   },
   "bills": {
     "title": "จัดการใบแจ้งหนี้",
@@ -84,7 +110,11 @@
     "apartment": "อพาร์ตเมนต์",
     "room": "ห้อง",
     "billNotFound": "ไม่พบใบแจ้งหนี้",
-    "billDetails": "รายละเอียดใบแจ้งหนี้"
+    "billDetails": "รายละเอียดใบแจ้งหนี้",
+    "filterByApartment": "กรองตามอพาร์ตเมนต์",
+    "allApartments": "อพาร์ตเมนต์ทั้งหมด",
+    "clearFilter": "ล้างตัวกรอง",
+    "rentalPeriod": "ระยะเวลาการเช่า"
   },
   "bill": {
     "title": "ใบแจ้งหนี้",
@@ -125,6 +155,7 @@
     "feeDescription": "รายละเอียดค่าใช้จ่าย",
     "amount": "จำนวนเงิน",
     "totalOtherFees": "ค่าใช้จ่ายอื่นๆ รวม",
+    "customUtilities": "สาธารณูปโภคเพิ่มเติม",
     "grandTotal": "รวมทั้งสิ้น",
     "currency": "บาท",
     "thb": "บาท",
@@ -149,7 +180,11 @@
     "ownerTaxId": "เลขประจำตัวผู้เสียภาษีเจ้าของ",
     "thankYou": "ขอบคุณสำหรับการชำระเงิน!",
     "generatedOn": "สร้างเมื่อ",
-    "billNotFound": "ไม่พบใบแจ้งหนี้"
+    "billNotFound": "ไม่พบใบแจ้งหนี้",
+    "discountDescription": "รายละเอียดส่วนลด",
+    "totalDiscounts": "ส่วนลดรวม",
+    "discounts": "ส่วนลด", 
+    "totalCustomUtilities": "สาธารณูปโภคเพิ่มเติมรวม"
   },
   "validation": {
     "pleaseSelectApartment": "กรุณาเลือกอพาร์ตเมนต์",
@@ -168,11 +203,16 @@
     "unknownErrorOccurred": "เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุขณะสร้างใบแจ้งหนี้",
     "networkError": "ข้อผิดพลาดเครือข่าย: ไม่สามารถสร้างใบแจ้งหนี้ได้ กรุณาตรวจสอบการเชื่อมต่อและลองอีกครั้ง",
     "fieldRequired": "ฟิลด์นี้จำเป็น",
-    "invalidInput": "ข้อมูลไม่ถูกต้อง"
+    "invalidInput": "ข้อมูลไม่ถูกต้อง",
+    "ownerNameRequired": "ชื่อเจ้าของจำเป็น",
+    "ownerAddressRequired": "ที่อยู่เจ้าของจำเป็น",
+    "ownerPhoneRequired": "โทรศัพท์เจ้าของจำเป็น",
+    "ownerTaxIdRequired": "เลขประจำตัวผู้เสียภาษีเจ้าของจำเป็น"
   },
   "placeholder": {
     "feeDescription": "รายละเอียดค่าใช้จ่าย",
-    "amount": "จำนวนเงิน"
+    "amount": "จำนวนเงิน",
+    "discountDescription": "รายละเอียดส่วนลด"
   },
   "settings": {
     "title": "ตั้งค่าเจ้าของ",
