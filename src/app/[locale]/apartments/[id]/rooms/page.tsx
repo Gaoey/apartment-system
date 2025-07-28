@@ -14,6 +14,12 @@ interface Room {
   _id: string;
   apartmentId: string;
   roomNumber: string;
+  tenantName?: string;
+  tenantPhone?: string;
+  tenantEmail?: string;
+  rentalStartDate?: string;
+  monthlyRent?: number;
+  securityDeposit?: number;
   createdAt: string;
 }
 
@@ -57,7 +63,13 @@ export default function RoomsPage({ params }: { params: Promise<{ id: string; lo
         setApartment(apartmentData.data);
       }
       if (roomsData.success) {
-        setRooms(roomsData.data);
+        const sortedRooms = roomsData.data.sort((a: Room, b: Room) => {
+          const numA = parseInt(a.roomNumber) || 0;
+          const numB = parseInt(b.roomNumber) || 0;
+          if (numA !== numB) return numA - numB;
+          return a.roomNumber.localeCompare(b.roomNumber);
+        });
+        setRooms(sortedRooms);
       }
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -216,6 +228,30 @@ export default function RoomsPage({ params }: { params: Promise<{ id: string; lo
                     </div>
                   </div>
                 </div>
+                
+                {room.tenantName ? (
+                  <div className="space-y-2 mb-4">
+                    <div className="bg-green-50 p-3 rounded-lg">
+                      <h4 className="font-medium text-green-800 mb-2">{t('tenantInfo')}</h4>
+                      <div className="space-y-1 text-sm text-green-700">
+                        <p><span className="font-medium">{t('name')}:</span> {room.tenantName}</p>
+                        {room.tenantPhone && <p><span className="font-medium">{t('phone')}:</span> {room.tenantPhone}</p>}
+                        {room.tenantEmail && <p><span className="font-medium">{t('email')}:</span> {room.tenantEmail}</p>}
+                        {room.monthlyRent && (
+                          <p><span className="font-medium">{t('monthlyRent')}:</span> {new Intl.NumberFormat(locale === 'th' ? 'th-TH' : 'en-US', { style: 'currency', currency: 'THB' }).format(room.monthlyRent)}</p>
+                        )}
+                        {room.rentalStartDate && (
+                          <p><span className="font-medium">{t('rentalStart')}:</span> {new Date(room.rentalStartDate).toLocaleDateString(locale)}</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="bg-gray-50 p-3 rounded-lg mb-4">
+                    <p className="text-sm text-gray-600">{t('noTenant')}</p>
+                  </div>
+                )}
+                
                 <div className="flex gap-2">
                   <Link
                     href={`/${locale}/bills/new?apartmentId=${apartmentId}&roomId=${room._id}`}

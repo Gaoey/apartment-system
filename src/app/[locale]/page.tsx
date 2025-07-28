@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Building, FileText, Settings } from "lucide-react";
+import { Building, FileText, Settings, Users } from "lucide-react";
 import { getTranslations } from 'next-intl/server';
 
 interface HomeProps {
@@ -21,7 +21,7 @@ export default async function Home({ params }: HomeProps) {
           </p>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
           <Link href={`/${locale}/apartments`} className="group">
             <div className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow border border-gray-200">
               <div className="flex items-center justify-center w-12 h-12 bg-blue-100 rounded-lg mb-4">
@@ -32,6 +32,20 @@ export default async function Home({ params }: HomeProps) {
               </h3>
               <p className="text-gray-600">
                 {t('manageApartmentsDesc')}
+              </p>
+            </div>
+          </Link>
+
+          <Link href={`/${locale}/owners`} className="group">
+            <div className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow border border-gray-200">
+              <div className="flex items-center justify-center w-12 h-12 bg-orange-100 rounded-lg mb-4">
+                <Users className="w-6 h-6 text-orange-600" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                {t('manageOwners')}
+              </h3>
+              <p className="text-gray-600">
+                {t('manageOwnersDesc')}
               </p>
             </div>
           </Link>

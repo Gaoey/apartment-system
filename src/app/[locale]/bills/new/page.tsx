@@ -77,7 +77,7 @@ export default function NewBillPage() {
       to: '',
     },
     rent: 0,
-    discount: 0,
+    discounts: [] as { description: string; amount: number }[],
     electricity: {
       startMeter: 0,
       endMeter: 0,
@@ -96,6 +96,11 @@ export default function NewBillPage() {
   });
   
   const [otherFeesInput, setOtherFeesInput] = useState({
+    description: '',
+    amount: 0,
+  });
+  
+  const [discountsInput, setDiscountsInput] = useState({
     description: '',
     amount: 0,
   });
@@ -192,9 +197,9 @@ export default function NewBillPage() {
           newFormData.rent = roomData.recurringFees.rent;
           fieldsToFill.push('rent');
         }
-        if (roomData.recurringFees.discount && formData.discount === 0) {
-          newFormData.discount = roomData.recurringFees.discount;
-          fieldsToFill.push('discount');
+        if (roomData.recurringFees.discount && formData.discounts.length === 0) {
+          newFormData.discounts = [{ description: 'Standard Discount', amount: roomData.recurringFees.discount }];
+          fieldsToFill.push('discounts');
         }
         if (roomData.recurringFees.airconFee && formData.airconFee === 0) {
           newFormData.airconFee = roomData.recurringFees.airconFee;
@@ -433,6 +438,16 @@ export default function NewBillPage() {
     }
   };
 
+  const addDiscount = () => {
+    if (discountsInput.description.trim() && discountsInput.amount > 0) {
+      setFormData(prev => ({
+        ...prev,
+        discounts: [...prev.discounts, { ...discountsInput }],
+      }));
+      setDiscountsInput({ description: '', amount: 0 });
+    }
+  };
+
   const removeOtherFee = (index: number) => {
     setFormData(prev => ({
       ...prev,
@@ -440,14 +455,22 @@ export default function NewBillPage() {
     }));
   };
 
+  const removeDiscount = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      discounts: prev.discounts.filter((_, i) => i !== index),
+    }));
+  };
+
   const calculatePreview = () => {
-    const netRent = formData.rent - formData.discount;
+    const discountsTotal = formData.discounts.reduce((sum, discount) => sum + discount.amount, 0);
+    const netRent = formData.rent - discountsTotal;
     const electricityCost = (formData.electricity.endMeter - formData.electricity.startMeter) * formData.electricity.rate + formData.electricity.meterFee;
     const waterCost = (formData.water.endMeter - formData.water.startMeter) * formData.water.rate + formData.water.meterFee;
     const otherFeesTotal = formData.otherFees.reduce((sum, fee) => sum + fee.amount, 0);
     const grandTotal = netRent + electricityCost + waterCost + formData.airconFee + formData.fridgeFee + otherFeesTotal;
 
-    return { netRent, electricityCost, waterCost, otherFeesTotal, grandTotal };
+    return { discountsTotal, netRent, electricityCost, waterCost, otherFeesTotal, grandTotal };
   };
 
   const preview = calculatePreview();
@@ -684,35 +707,80 @@ export default function NewBillPage() {
                         />
                       </div>
                     </div>
-                    <div className="grid md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          {t('rent')} ({t('thb')}) *
-                        </label>
-                        <input
-                          type="number"
-                          name="rent"
-                          value={formData.rent}
-                          onChange={handleChange}
-                          min="0"
-                          step="0.01"
-                          required
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          {t('discount')} ({t('thb')})
-                        </label>
-                        <input
-                          type="number"
-                          name="discount"
-                          value={formData.discount}
-                          onChange={handleChange}
-                          min="0"
-                          step="0.01"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        />
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        {t('rent')} ({t('thb')}) *
+                      </label>
+                      <input
+                        type="number"
+                        name="rent"
+                        value={formData.rent}
+                        onChange={handleChange}
+                        min="0"
+                        step="0.01"
+                        required
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
+                    </div>
+                    
+                    <div>
+                      <h4 className="font-medium mb-3">{t('discount')}</h4>
+                      
+                      {formData.discounts.length > 0 && (
+                        <div className="space-y-2 mb-4">
+                          {formData.discounts.map((discount, index) => (
+                            <div key={index} className="flex items-center gap-3 p-3 bg-gray-50 rounded-md">
+                              <div className="flex-1">
+                                <span className="font-medium text-gray-700">{discount.description}</span>
+                              </div>
+                              <div className="text-gray-600">
+                                ฿{discount.amount.toLocaleString()}
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => removeDiscount(index)}
+                                className="text-red-600 hover:text-red-800 p-1"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      <div className="flex gap-3">
+                        <div className="flex-1">
+                          <input
+                            type="text"
+                            placeholder={t('discountDescription')}
+                            value={discountsInput.description}
+                            onChange={(e) => setDiscountsInput(prev => ({ ...prev, description: e.target.value }))}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          />
+                        </div>
+                        <div className="w-32">
+                          <input
+                            type="number"
+                            placeholder={tp('amount')}
+                            value={discountsInput.amount === 0 ? '' : discountsInput.amount}
+                            onChange={(e) => setDiscountsInput(prev => ({ 
+                              ...prev, 
+                              amount: e.target.value === '' ? 0 : parseFloat(e.target.value) || 0 
+                            }))}
+                            min="0"
+                            step="0.01"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          />
+                        </div>
+                        <button
+                          type="button"
+                          onClick={addDiscount}
+                          disabled={!discountsInput.description.trim() || discountsInput.amount <= 0}
+                          className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center gap-2"
+                        >
+                          <Plus className="w-4 h-4" />
+                          {tc('add')}
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -957,10 +1025,18 @@ export default function NewBillPage() {
                       <span>{t('rent')}:</span>
                       <span>฿{formData.rent.toLocaleString()}</span>
                     </div>
-                    {formData.discount > 0 && (
-                      <div className="flex justify-between text-red-600">
-                        <span>{t('discount')}:</span>
-                        <span>-฿{formData.discount.toLocaleString()}</span>
+                    {formData.discounts.length > 0 && (
+                      <div className="space-y-1">
+                        {formData.discounts.map((discount, index) => (
+                          <div key={index} className="flex justify-between text-red-600 text-sm">
+                            <span>{discount.description}:</span>
+                            <span>-฿{discount.amount.toLocaleString()}</span>
+                          </div>
+                        ))}
+                        <div className="flex justify-between text-red-600 font-medium">
+                          <span>{t('totalDiscounts')}:</span>
+                          <span>-฿{preview.discountsTotal.toLocaleString()}</span>
+                        </div>
                       </div>
                     )}
                     <div className="flex justify-between">

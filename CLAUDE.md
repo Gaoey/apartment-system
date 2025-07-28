@@ -112,7 +112,9 @@ return <h1>{t('title')}</h1>;
 
 #### Owner
 - name, address, phone, taxId
-- Static information used on invoices
+- apartments (array of apartment references)
+- Support for multiple owners per apartment
+- Used on invoices and apartment management
 
 ### API Endpoints
 
@@ -141,17 +143,27 @@ return <h1>{t('title')}</h1>;
 - `PUT /api/rooms/[id]` - Update room
 - `DELETE /api/rooms/[id]` - Delete room
 
-#### Owner
-- `GET /api/owner` - Get owner information
-- `POST /api/owner` - Create/update owner information
+#### Owners
+- `GET /api/owners` - List all owners (supports populate=apartments)
+- `POST /api/owners` - Create new owner
+- `GET /api/owners/[id]` - Get owner by ID (supports populate=apartments)
+- `PUT /api/owners/[id]` - Update owner
+- `DELETE /api/owners/[id]` - Delete owner (prevents deletion if associated with apartments)
+
+#### Owner (Legacy - Single Owner)
+- `GET /api/owner` - Get single owner information (legacy)
+- `POST /api/owner` - Create/update single owner information (legacy)
 
 ### Key Features Implemented
 
 1. **Multi-Apartment Management**: Create, update, delete apartments
-2. **Room Management**: Each apartment can have multiple rooms
-3. **Bill Generation**: Automatic calculation of utility costs and totals
-4. **Dynamic Other Fees**: Add, update, remove multiple other fees with descriptions
-5. **Form Validation**: Comprehensive client-side validation with error messages
+2. **Multiple Owners Support**: Each apartment can have multiple owners selected during creation/editing
+3. **Owners Management**: Create, update, delete property owners with apartment associations
+4. **Room Management**: Each apartment can have multiple rooms
+5. **Bill Generation**: Automatic calculation of utility costs and totals
+6. **Dynamic Discounts**: Multiple discount entries with custom descriptions and amounts
+7. **Dynamic Other Fees**: Add, update, remove multiple other fees with descriptions
+8. **Form Validation**: Comprehensive client-side validation with error messages
 6. **Internationalization (i18n)**:
    - Thai language as default
    - English language support

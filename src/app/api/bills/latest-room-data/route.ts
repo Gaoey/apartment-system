@@ -92,19 +92,14 @@ export async function GET(request: NextRequest) {
           rate: latestBill.electricity.rate,
           meterFee: latestBill.electricity.meterFee
         },
-        water: {
-          endMeter: latestBill.water.endMeter,
-          rate: latestBill.water.rate,
-          meterFee: latestBill.water.meterFee
-        }
+        customUtilities: latestBill.customUtilities
       },
       
       // Additional fees that might be recurring
       recurringFees: {
         rent: latestBill.rent,
-        discount: latestBill.discount,
-        airconFee: latestBill.airconFee,
-        fridgeFee: latestBill.fridgeFee
+        discounts: latestBill.discounts,
+        customUtilities: latestBill.customUtilities
       },
       
       // Metadata

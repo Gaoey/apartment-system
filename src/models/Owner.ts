@@ -5,6 +5,7 @@ export interface IOwner extends Document {
   address: string;
   phone: string;
   taxId: string;
+  apartments: mongoose.Types.ObjectId[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -31,6 +32,10 @@ const OwnerSchema: Schema = new Schema(
       required: [true, 'Owner tax ID is required'],
       trim: true,
     },
+    apartments: [{
+      type: Schema.Types.ObjectId,
+      ref: 'Apartment',
+    }],
   },
   {
     timestamps: true,

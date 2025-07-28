@@ -38,29 +38,31 @@ interface Bill {
     to: string;
   };
   rent: number;
-  discount: number;
+  discounts: Array<{
+    description: string;
+    amount: number;
+  }>;
   electricity: {
     startMeter: number;
     endMeter: number;
     rate: number;
     meterFee: number;
   };
-  water: {
-    startMeter: number;
-    endMeter: number;
-    rate: number;
-    meterFee: number;
-  };
-  airconFee: number;
-  fridgeFee: number;
+  customUtilities: Array<{
+    name: string;
+    startMeter?: number;
+    endMeter?: number;
+    rate?: number;
+    meterFee?: number;
+    fixedAmount?: number;
+  }>;
   otherFees: Array<{
     description: string;
     amount: number;
   }>;
-  otherFeesTotal: number;
   netRent: number;
   electricityCost: number;
-  waterCost: number;
+  customUtilitiesCost: number;
   grandTotal: number;
   documentNumber?: string;
   createdAt: string;
@@ -191,10 +193,10 @@ export default function BillPDFPage({
 
         {/* PDF Content - Compact Bill Design for A4 */}
         <div className="container mx-auto px-4 py-4 print:p-2 print:m-0 max-w-2xl print:max-w-full">
-          {/* Three sections on single page */}
+          {/* Two sections on single page */}
           <div className="space-y-6 print:space-y-4">
-            {["Original", "Customer Copy", "Tax Invoice"].map((copyType) => (
-              <div key={copyType} className="bg-white border border-gray-300 rounded-lg print:rounded-none print:border-gray-800 print:h-auto print:min-h-[250px]">
+            {["Original", "Customer Copy"].map((copyType) => (
+              <div key={copyType} className="bg-white border border-gray-300 rounded-lg print:rounded-none print:border-gray-800 print:h-auto print:min-h-[350px]">
                 {/* Header Section - Compact */}
                 <div className="bg-gray-50 print:bg-white border-b border-gray-300 print:border-gray-800 p-3 print:p-2">
                   <div className="flex justify-between items-start">
@@ -205,6 +207,9 @@ export default function BillPDFPage({
                       <div className="text-xs text-gray-600">
                         <p className="truncate">{owner?.address || bill.apartmentId.address}</p>
                         <p>{locale === "th" ? "โทร" : "Tel"}: {owner?.phone || bill.apartmentId.phone}</p>
+                        {owner?.taxId && (
+                          <p>{locale === "th" ? "เลขประจำตัวผู้เสียภาษี" : "Tax ID"}: {owner.taxId}</p>
+                        )}
                       </div>
                     </div>
                     <div className="text-center mx-3">
@@ -227,15 +232,48 @@ export default function BillPDFPage({
 
                 {/* Main Content - Ultra Compact */}
                 <div className="p-3 print:p-2">
-                  {/* Tenant & Period in single row */}
-                  <div className="grid grid-cols-2 gap-4 text-xs mb-2 print:mb-1">
-                    <div>
-                      <p><span className="font-medium">{locale === "th" ? "ผู้เช่า" : "Tenant"}:</span> {bill.tenantName}</p>
-                      <p><span className="font-medium">{locale === "th" ? "โทร" : "Phone"}:</span> {bill.tenantPhone}</p>
+                  {/* Owner Information Row */}
+                  <div className="text-xs mb-2 print:mb-1 border-b border-gray-200 pb-1">
+                    <p className="font-semibold text-gray-800 mb-1">{locale === "th" ? "ผู้ให้เช่า" : "Landlord"}:</p>
+                    <div className="grid grid-cols-4 gap-2">
+                      <p><span className="font-medium">{locale === "th" ? "ชื่อ" : "Name"}:</span> {owner?.name || bill.apartmentId.name}</p>
+                      <p><span className="font-medium">{locale === "th" ? "ที่อยู่" : "Address"}:</span> {owner?.address || bill.apartmentId.address}</p>
+                      <p><span className="font-medium">{locale === "th" ? "โทร" : "Phone"}:</span> {owner?.phone || bill.apartmentId.phone}</p>
+                      {owner?.taxId && (
+                        <p><span className="font-medium">{locale === "th" ? "เลขประจำตัวผู้เสียภาษี" : "Tax ID"}:</span> {owner.taxId}</p>
+                      )}
                     </div>
-                    <div>
-                      <p><span className="font-medium">{locale === "th" ? "ระยะเวลา" : "Period"}:</span> {formatDate(bill.rentalPeriod.from)} - {formatDate(bill.rentalPeriod.to)}</p>
-                      <p><span className="font-medium">{locale === "th" ? "ครบกำหนด" : "Due"}:</span> {bill.paymentDueDate ? formatDate(bill.paymentDueDate) : 
+                  </div>
+
+                  {/* Apartment Information Row */}
+                  <div className="text-xs mb-2 print:mb-1 border-b border-gray-200 pb-1">
+                    <p className="font-semibold text-gray-800 mb-1">{locale === "th" ? "อพาร์ตเมนต์" : "Apartment"}:</p>
+                    <div className="grid grid-cols-4 gap-2">
+                      <p><span className="font-medium">{locale === "th" ? "ชื่อ" : "Name"}:</span> {bill.apartmentId.name}</p>
+                      <p><span className="font-medium">{locale === "th" ? "ห้อง" : "Room"}:</span> {bill.roomId.roomNumber}</p>
+                      <p><span className="font-medium">{locale === "th" ? "ที่อยู่" : "Address"}:</span> {bill.apartmentId.address}</p>
+                      <p><span className="font-medium">{locale === "th" ? "โทร" : "Phone"}:</span> {bill.apartmentId.phone}</p>
+                    </div>
+                  </div>
+
+                  {/* Tenant Information Row */}
+                  <div className="text-xs mb-2 print:mb-1 border-b border-gray-200 pb-1">
+                    <p className="font-semibold text-gray-800 mb-1">{locale === "th" ? "ผู้เช่า" : "Tenant"}:</p>
+                    <div className="grid grid-cols-4 gap-2">
+                      <p><span className="font-medium">{locale === "th" ? "ชื่อ" : "Name"}:</span> {bill.tenantName}</p>
+                      <p><span className="font-medium">{locale === "th" ? "ที่อยู่" : "Address"}:</span> {bill.tenantAddress}</p>
+                      <p><span className="font-medium">{locale === "th" ? "โทร" : "Phone"}:</span> {bill.tenantPhone}</p>
+                      {bill.tenantTaxId && (
+                        <p><span className="font-medium">{locale === "th" ? "เลขประจำตัวผู้เสียภาษี" : "Tax ID"}:</span> {bill.tenantTaxId}</p>
+                      )}
+                    </div>
+                  </div>
+                  
+                  {/* Period & Due Date Row */}
+                  <div className="text-xs mb-2 print:mb-1 border-b border-gray-200 pb-1">
+                    <div className="grid grid-cols-2 gap-4">
+                      <p><span className="font-medium">{locale === "th" ? "ระยะเวลาเช่า" : "Rental Period"}:</span> {formatDate(bill.rentalPeriod.from)} - {formatDate(bill.rentalPeriod.to)}</p>
+                      <p><span className="font-medium">{locale === "th" ? "ครบกำหนดชำระ" : "Payment Due"}:</span> {bill.paymentDueDate ? formatDate(bill.paymentDueDate) : 
                         new Date(new Date(bill.billingDate).getTime() + 7 * 24 * 60 * 60 * 1000)
                           .toLocaleDateString(locale === "th" ? "th-TH" : "en-US")}</p>
                     </div>
@@ -248,11 +286,13 @@ export default function BillPDFPage({
                       <span className="font-medium">{bill.rent.toLocaleString()}</span>
                     </div>
                     
-                    {bill.discount > 0 && (
-                      <div className="flex justify-between py-1 border-b border-gray-200">
-                        <span>{locale === "th" ? "ส่วนลด" : "Discount"}</span>
-                        <span className="text-red-600">-{bill.discount.toLocaleString()}</span>
-                      </div>
+                    {bill.discounts && bill.discounts.length > 0 && (
+                      bill.discounts.map((discount, i) => (
+                        <div key={i} className="flex justify-between py-1 border-b border-gray-200">
+                          <span className="truncate">{discount.description}</span>
+                          <span className="text-red-600">-{discount.amount.toLocaleString()}</span>
+                        </div>
+                      ))
                     )}
                     
                     <div className="flex justify-between py-1 border-b border-gray-200">
@@ -272,30 +312,34 @@ export default function BillPDFPage({
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4 py-1 border-b border-gray-200">
-                      <div>
-                        <span className="font-medium">{locale === "th" ? "น้ำ" : "Water"}</span>
-                        <span className="text-[10px] text-gray-500 block">
-                          {(bill.water.endMeter - bill.water.startMeter).toFixed(0)}u × {bill.water.rate} + {bill.water.meterFee}
-                        </span>
-                      </div>
-                      <div className="text-right">
-                        <span className="font-medium">{bill.waterCost.toLocaleString()}</span>
-                      </div>
-                    </div>
-
-                    {bill.airconFee > 0 && (
-                      <div className="flex justify-between py-1 border-b border-gray-200">
-                        <span>{locale === "th" ? "แอร์" : "AC"}</span>
-                        <span>{bill.airconFee.toLocaleString()}</span>
-                      </div>
-                    )}
-
-                    {bill.fridgeFee > 0 && (
-                      <div className="flex justify-between py-1 border-b border-gray-200">
-                        <span>{locale === "th" ? "ตู้เย็น" : "Fridge"}</span>
-                        <span>{bill.fridgeFee.toLocaleString()}</span>
-                      </div>
+                    {bill.customUtilities && bill.customUtilities.length > 0 && (
+                      bill.customUtilities.map((utility, i) => (
+                        <div key={i} className="grid grid-cols-2 gap-4 py-1 border-b border-gray-200">
+                          <div>
+                            <span className="font-medium">{utility.name}</span>
+                            <span className="text-[10px] text-gray-500 block">
+                              {utility.fixedAmount !== undefined ? (
+                                `Fixed: ${utility.fixedAmount}`
+                              ) : utility.startMeter !== undefined && utility.endMeter !== undefined && utility.rate !== undefined ? (
+                                `${(utility.endMeter - utility.startMeter).toFixed(0)}u × ${utility.rate} + ${utility.meterFee || 0}`
+                              ) : (
+                                'Custom'
+                              )}
+                            </span>
+                          </div>
+                          <div className="text-right">
+                            <span className="font-medium">
+                              {utility.fixedAmount !== undefined ? (
+                                utility.fixedAmount.toLocaleString()
+                              ) : utility.startMeter !== undefined && utility.endMeter !== undefined && utility.rate !== undefined ? (
+                                ((utility.endMeter - utility.startMeter) * utility.rate + (utility.meterFee || 0)).toLocaleString()
+                              ) : (
+                                '0'
+                              )}
+                            </span>
+                          </div>
+                        </div>
+                      ))
                     )}
 
                     {bill.otherFees.map((fee, i) => (
@@ -316,21 +360,6 @@ export default function BillPDFPage({
                     </div>
                   </div>
 
-                  {/* Signature Section */}
-                  <div className="grid grid-cols-2 gap-6 mt-2 print:mt-1 text-xs">
-                    <div className="text-center">
-                      <div className="border-t border-gray-400 mt-3 print:mt-2 pt-1">
-                        <p className="text-[10px] print:text-[10px]">{locale === "th" ? "ลายเซ็นผู้รับเงิน" : "Receiver Signature"}</p>
-                        <p className="text-[10px] print:text-[10px]">{locale === "th" ? "วันที่" : "Date"}: ___________</p>
-                      </div>
-                    </div>
-                    <div className="text-center">
-                      <div className="border-t border-gray-400 mt-3 print:mt-2 pt-1">
-                        <p className="text-[10px] print:text-[10px]">{locale === "th" ? "ลายเซ็นผู้จ่ายเงิน" : "Payer Signature"}</p>
-                        <p className="text-[10px] print:text-[10px]">{locale === "th" ? "วันที่" : "Date"}: ___________</p>
-                      </div>
-                    </div>
-                  </div>
                 </div>
               </div>
             ))}
@@ -368,8 +397,8 @@ export default function BillPDFPage({
           .print\\:h-auto {
             height: auto !important;
           }
-          .print\\:min-h-\\[250px\\] {
-            min-height: 250px !important;
+          .print\\:min-h-\\[350px\\] {
+            min-height: 350px !important;
           }
           .print\\:space-y-4 > * + * {
             margin-top: 1rem !important;

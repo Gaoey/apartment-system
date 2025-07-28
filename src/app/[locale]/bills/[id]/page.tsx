@@ -6,6 +6,13 @@ import { useRouter } from 'next/navigation';
 import { Home, FileText, Download, Building, User, Calendar, Receipt, Edit, Trash2 } from 'lucide-react';
 import { useTranslations, useLocale } from 'next-intl';
 
+interface Owner {
+  name: string;
+  address: string;
+  phone: string;
+  taxId: string;
+}
+
 interface Bill {
   _id: string;
   runningNumber: string;
@@ -31,29 +38,31 @@ interface Bill {
     to: string;
   };
   rent: number;
-  discount: number;
+  discounts: Array<{
+    description: string;
+    amount: number;
+  }>;
   electricity: {
     startMeter: number;
     endMeter: number;
     rate: number;
     meterFee: number;
   };
-  water: {
-    startMeter: number;
-    endMeter: number;
-    rate: number;
-    meterFee: number;
-  };
-  airconFee: number;
-  fridgeFee: number;
+  customUtilities: Array<{
+    name: string;
+    startMeter?: number;
+    endMeter?: number;
+    rate?: number;
+    meterFee?: number;
+    fixedAmount?: number;
+  }>;
   otherFees: Array<{
     description: string;
     amount: number;
   }>;
-  otherFeesTotal: number;
   netRent: number;
   electricityCost: number;
-  waterCost: number;
+  customUtilitiesCost: number;
   grandTotal: number;
   documentNumber?: string;
   createdAt: string;
@@ -66,6 +75,7 @@ export default function BillDetailPage({ params }: { params: Promise<{ id: strin
   const locale = useLocale();
   const router = useRouter();
   const [bill, setBill] = useState<Bill | null>(null);
+  const [owner, setOwner] = useState<Owner | null>(null);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState(false);
   const [billId, setBillId] = useState<string>('');
@@ -86,13 +96,22 @@ export default function BillDetailPage({ params }: { params: Promise<{ id: strin
 
   const fetchBill = async () => {
     try {
-      const response = await fetch(`/api/bills/${billId}/with-running-number`);
-      const data = await response.json();
-      if (data.success) {
-        setBill(data.data);
+      const [billRes, ownerRes] = await Promise.all([
+        fetch(`/api/bills/${billId}/with-running-number`),
+        fetch("/api/owner"),
+      ]);
+
+      const billData = await billRes.json();
+      const ownerData = await ownerRes.json();
+
+      if (billData.success) {
+        setBill(billData.data);
+      }
+      if (ownerData.success) {
+        setOwner(ownerData.data);
       }
     } catch (error) {
-      console.error('Error fetching bill:', error);
+      console.error('Error fetching data:', error);
     } finally {
       setLoading(false);
     }
@@ -222,30 +241,50 @@ export default function BillDetailPage({ params }: { params: Promise<{ id: strin
               </div>
             </div>
 
-            <div className="grid md:grid-cols-2 gap-8">
-              <div>
+            <div className="space-y-6">
+              {/* Owner Information Row */}
+              <div className="bg-white border border-gray-200 rounded-lg p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <User className="w-5 h-5 text-gray-600" />
+                  <h3 className="font-semibold text-gray-900">{t('ownerInfo')}</h3>
+                </div>
+                <div className="grid md:grid-cols-4 gap-4 text-gray-700">
+                  <p><span className="font-medium">{t('ownerName')}:</span> {owner?.name || bill.apartmentId.name}</p>
+                  <p><span className="font-medium">{t('ownerAddress')}:</span> {owner?.address || bill.apartmentId.address}</p>
+                  <p><span className="font-medium">{t('ownerPhone')}:</span> {owner?.phone || bill.apartmentId.phone}</p>
+                  {owner?.taxId && (
+                    <p><span className="font-medium">{t('ownerTaxId')}:</span> {owner.taxId}</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Apartment Information Row */}
+              <div className="bg-white border border-gray-200 rounded-lg p-4">
                 <div className="flex items-center gap-2 mb-3">
                   <Building className="w-5 h-5 text-gray-600" />
                   <h3 className="font-semibold text-gray-900">{t('propertyInfo')}</h3>
                 </div>
-                <div className="space-y-1 text-gray-700">
+                <div className="grid md:grid-cols-4 gap-4 text-gray-700">
                   <p><span className="font-medium">{t('apartment')}:</span> {bill.apartmentId.name}</p>
                   <p><span className="font-medium">{t('room')}:</span> {bill.roomId.roomNumber}</p>
-                  <p><span className="font-medium">{t('tenantAddress')}:</span> {bill.apartmentId.address}</p>
-                  <p><span className="font-medium">{t('tenantPhone')}:</span> {bill.apartmentId.phone}</p>
+                  <p><span className="font-medium">{t('propertyAddress')}:</span> {bill.apartmentId.address}</p>
+                  <p><span className="font-medium">{t('propertyPhone')}:</span> {bill.apartmentId.phone}</p>
                 </div>
               </div>
 
-              <div>
+              {/* Tenant Information Row */}
+              <div className="bg-white border border-gray-200 rounded-lg p-4">
                 <div className="flex items-center gap-2 mb-3">
                   <User className="w-5 h-5 text-gray-600" />
                   <h3 className="font-semibold text-gray-900">{t('tenantInfo')}</h3>
                 </div>
-                <div className="space-y-1 text-gray-700">
+                <div className="grid md:grid-cols-4 gap-4 text-gray-700">
                   <p><span className="font-medium">{t('tenantName')}:</span> {bill.tenantName}</p>
                   <p><span className="font-medium">{t('tenantAddress')}:</span> {bill.tenantAddress}</p>
                   <p><span className="font-medium">{t('tenantPhone')}:</span> {bill.tenantPhone}</p>
-                  <p><span className="font-medium">{t('tenantTaxId')}:</span> {bill.tenantTaxId}</p>
+                  {bill.tenantTaxId && (
+                    <p><span className="font-medium">{t('tenantTaxId')}:</span> {bill.tenantTaxId}</p>
+                  )}
                 </div>
               </div>
             </div>
@@ -270,10 +309,14 @@ export default function BillDetailPage({ params }: { params: Promise<{ id: strin
                 <span className="font-medium">{formatCurrency(bill.rent)}</span>
               </div>
               
-              {bill.discount > 0 && (
-                <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                  <span className="text-gray-700">{t('discount')}</span>
-                  <span className="font-medium text-red-600">-{formatCurrency(bill.discount)}</span>
+              {bill.discounts && bill.discounts.length > 0 && (
+                <div className="space-y-2">
+                  {bill.discounts.map((discount, index) => (
+                    <div key={index} className="flex justify-between items-center py-2 border-b border-gray-100">
+                      <span className="text-gray-700">{discount.description}</span>
+                      <span className="font-medium text-red-600">-{formatCurrency(discount.amount)}</span>
+                    </div>
+                  ))}
                 </div>
               )}
               
@@ -293,28 +336,41 @@ export default function BillDetailPage({ params }: { params: Promise<{ id: strin
                   <span className="font-medium">{formatCurrency(bill.electricityCost)}</span>
                 </div>
                 
-                <div className="flex justify-between items-center py-2">
-                  <div>
-                    <span className="text-gray-700">{t('water')}</span>
-                    <div className="text-sm text-gray-500">
-                      {bill.water.endMeter - bill.water.startMeter} {t('waterUnit')} × {formatCurrency(bill.water.rate)} + {formatCurrency(bill.water.meterFee)} {t('meterFee')}
-                    </div>
+                {bill.customUtilities && bill.customUtilities.length > 0 && (
+                  <div className="space-y-2">
+                    {bill.customUtilities.map((utility, index) => (
+                      <div key={index} className="flex justify-between items-center py-2">
+                        <div>
+                          <span className="text-gray-700">{utility.name}</span>
+                          <div className="text-sm text-gray-500">
+                            {utility.fixedAmount !== undefined ? (
+                              `Fixed: ${formatCurrency(utility.fixedAmount)}`
+                            ) : utility.startMeter !== undefined && utility.endMeter !== undefined && utility.rate !== undefined ? (
+                              `${utility.endMeter - utility.startMeter} units × ${formatCurrency(utility.rate)} + ${formatCurrency(utility.meterFee || 0)} meter fee`
+                            ) : (
+                              'Custom utility'
+                            )}
+                          </div>
+                        </div>
+                        <span className="font-medium">
+                          {utility.fixedAmount !== undefined ? (
+                            formatCurrency(utility.fixedAmount)
+                          ) : utility.startMeter !== undefined && utility.endMeter !== undefined && utility.rate !== undefined ? (
+                            formatCurrency((utility.endMeter - utility.startMeter) * utility.rate + (utility.meterFee || 0))
+                          ) : (
+                            formatCurrency(0)
+                          )}
+                        </span>
+                      </div>
+                    ))}
                   </div>
-                  <span className="font-medium">{formatCurrency(bill.waterCost)}</span>
-                </div>
+                )}
               </div>
 
-              {bill.airconFee > 0 && (
+              {bill.customUtilitiesCost > 0 && (
                 <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                  <span className="text-gray-700">{t('airconFee')}</span>
-                  <span className="font-medium">{formatCurrency(bill.airconFee)}</span>
-                </div>
-              )}
-
-              {bill.fridgeFee > 0 && (
-                <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                  <span className="text-gray-700">{t('fridgeFee')}</span>
-                  <span className="font-medium">{formatCurrency(bill.fridgeFee)}</span>
+                  <span className="text-gray-700">{t('customUtilities')}</span>
+                  <span className="font-medium">{formatCurrency(bill.customUtilitiesCost)}</span>
                 </div>
               )}
 
@@ -329,12 +385,6 @@ export default function BillDetailPage({ params }: { params: Promise<{ id: strin
                 </div>
               )}
 
-              {bill.otherFeesTotal > 0 && (
-                <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                  <span className="text-gray-700">{t('totalOtherFees')}</span>
-                  <span className="font-medium">{formatCurrency(bill.otherFeesTotal)}</span>
-                </div>
-              )}
 
               <div className="flex justify-between items-center py-4 border-t-2 border-gray-200 mt-4">
                 <span className="text-xl font-semibold text-gray-900">{t('grandTotal')}</span>

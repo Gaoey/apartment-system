@@ -5,6 +5,7 @@ export interface IApartment extends Document {
   address: string;
   phone: string;
   taxId: string;
+  owners: mongoose.Types.ObjectId[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -31,6 +32,10 @@ const ApartmentSchema: Schema = new Schema(
       required: [true, 'Tax ID is required'],
       trim: true,
     },
+    owners: [{
+      type: Schema.Types.ObjectId,
+      ref: 'Owner',
+    }],
   },
   {
     timestamps: true,

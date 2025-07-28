@@ -1,10 +1,15 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Home, Building, Save, X } from 'lucide-react';
+import { Home, Building, Save, X, Users, Plus } from 'lucide-react';
 import { useTranslations, useLocale } from 'next-intl';
+
+interface Owner {
+  _id: string;
+  name: string;
+}
 
 export default function NewApartmentPage() {
   const t = useTranslations('apartments');
@@ -12,12 +17,30 @@ export default function NewApartmentPage() {
   const locale = useLocale();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [owners, setOwners] = useState<Owner[]>([]);
   const [formData, setFormData] = useState({
     name: '',
     address: '',
     phone: '',
     taxId: '',
+    owners: [] as string[],
   });
+
+  useEffect(() => {
+    fetchOwners();
+  }, []);
+
+  const fetchOwners = async () => {
+    try {
+      const response = await fetch('/api/owners');
+      const data = await response.json();
+      if (data.success) {
+        setOwners(data.data);
+      }
+    } catch (error) {
+      console.error('Error fetching owners:', error);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,6 +74,22 @@ export default function NewApartmentPage() {
       ...prev,
       [e.target.name]: e.target.value
     }));
+  };
+
+  const handleOwnerSelection = (ownerId: string) => {
+    setFormData(prev => ({
+      ...prev,
+      owners: prev.owners.includes(ownerId)
+        ? prev.owners.filter(id => id !== ownerId)
+        : [...prev.owners, ownerId]
+    }));
+  };
+
+  const getSelectedOwnerNames = () => {
+    return formData.owners
+      .map(ownerId => owners.find(owner => owner._id === ownerId)?.name)
+      .filter(Boolean)
+      .join(', ');
   };
 
   return (
@@ -133,6 +172,53 @@ export default function NewApartmentPage() {
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="Enter tax ID"
                   />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <Users className="inline w-4 h-4 mr-1" />
+                    {t('selectOwners')}
+                  </label>
+                  {owners.length === 0 ? (
+                    <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-md">
+                      <p className="text-yellow-800 text-sm mb-2">{t('noOwnersAvailable')}</p>
+                      <Link
+                        href={`/${locale}/owners/new`}
+                        className="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800"
+                      >
+                        <Plus className="w-3 h-3" />
+                        {t('createOwnerFirst')}
+                      </Link>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {formData.owners.length > 0 && (
+                        <div className="p-3 bg-blue-50 border border-blue-200 rounded-md">
+                          <p className="text-sm text-blue-800">
+                            <strong>{t('selectedOwners')}:</strong> {getSelectedOwnerNames()}
+                          </p>
+                        </div>
+                      )}
+                      <div className="grid grid-cols-1 gap-2 max-h-40 overflow-y-auto border border-gray-300 rounded-md p-2">
+                        {owners.map((owner) => (
+                          <label
+                            key={owner._id}
+                            className="flex items-center p-2 hover:bg-gray-50 rounded cursor-pointer"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={formData.owners.includes(owner._id)}
+                              onChange={() => handleOwnerSelection(owner._id)}
+                              className="mr-3 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                            />
+                            <span className="text-sm font-medium text-gray-700">
+                              {owner.name}
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 
