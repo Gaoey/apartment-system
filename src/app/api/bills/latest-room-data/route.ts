@@ -102,7 +102,7 @@ export async function GET(request: NextRequest) {
       // Additional fees that might be recurring
       recurringFees: {
         rent: latestBill.rent,
-        discount: latestBill.discounts?.reduce((sum, d) => sum + d.amount, 0) || 0,
+        discounts: latestBill.discounts || [],
         airconFee: latestBill.airconFee,
         fridgeFee: latestBill.fridgeFee
       },

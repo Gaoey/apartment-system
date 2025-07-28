@@ -196,7 +196,10 @@ export default function BillPDFPage({
           {/* Two sections on single page */}
           <div className="space-y-6 print:space-y-4">
             {["Original", "Customer Copy"].map((copyType) => (
-              <div key={copyType} className="bg-white border border-gray-300 rounded-lg print:rounded-none print:border-gray-800 print:h-auto print:min-h-[350px]">
+              <div
+                key={copyType}
+                className="bg-white border border-gray-300 rounded-lg print:rounded-none print:border-gray-800 print:h-auto print:min-h-[350px]"
+              >
                 {/* Header Section - Compact */}
                 <div className="bg-gray-50 print:bg-white border-b border-gray-300 print:border-gray-800 p-3 print:p-2">
                   <div className="flex justify-between items-start">
@@ -205,10 +208,20 @@ export default function BillPDFPage({
                         {owner?.name || bill.apartmentId.name}
                       </h1>
                       <div className="text-xs text-gray-600">
-                        <p className="truncate">{owner?.address || bill.apartmentId.address}</p>
-                        <p>{locale === "th" ? "โทร" : "Tel"}: {owner?.phone || bill.apartmentId.phone}</p>
+                        <p className="truncate">
+                          {owner?.address || bill.apartmentId.address}
+                        </p>
+                        <p>
+                          {locale === "th" ? "โทร" : "Tel"}:{" "}
+                          {owner?.phone || bill.apartmentId.phone}
+                        </p>
                         {owner?.taxId && (
-                          <p>{locale === "th" ? "เลขประจำตัวผู้เสียภาษี" : "Tax ID"}: {owner.taxId}</p>
+                          <p>
+                            {locale === "th"
+                              ? "เลขประจำตัวผู้เสียภาษี"
+                              : "Tax ID"}
+                            : {owner.taxId}
+                          </p>
                         )}
                       </div>
                     </div>
@@ -216,7 +229,9 @@ export default function BillPDFPage({
                       <h2 className="text-lg print:text-base font-bold text-blue-600 print:text-gray-800">
                         {locale === "th" ? "ใบแจ้งหนี้" : "BILL"}
                       </h2>
-                      <p className="text-sm print:text-xs font-semibold">#{bill.runningNumber}</p>
+                      <p className="text-sm print:text-xs font-semibold">
+                        #{bill.runningNumber}
+                      </p>
                       <p className="text-xs">{formatDate(bill.billingDate)}</p>
                     </div>
                     <div className="text-right">
@@ -224,7 +239,8 @@ export default function BillPDFPage({
                         <p className="text-xs font-bold">{copyType}</p>
                       </div>
                       <p className="text-xs text-gray-500">
-                        {locale === "th" ? "ห้อง" : "Room"}: {bill.roomId.roomNumber}
+                        {locale === "th" ? "ห้อง" : "Room"}:{" "}
+                        {bill.roomId.roomNumber}
                       </p>
                     </div>
                   </div>
@@ -234,78 +250,188 @@ export default function BillPDFPage({
                 <div className="p-3 print:p-2">
                   {/* Owner Information Row */}
                   <div className="text-xs mb-2 print:mb-1 border-b border-gray-200 pb-1">
-                    <p className="font-semibold text-gray-800 mb-1">{locale === "th" ? "ผู้ให้เช่า" : "Landlord"}:</p>
+                    <p className="font-semibold text-gray-800 mb-1">
+                      {locale === "th" ? "ผู้ให้เช่า" : "Landlord"}:
+                    </p>
                     <div className="grid grid-cols-4 gap-2">
-                      <p><span className="font-medium">{locale === "th" ? "ชื่อ" : "Name"}:</span> {owner?.name || bill.apartmentId.name}</p>
-                      <p><span className="font-medium">{locale === "th" ? "ที่อยู่" : "Address"}:</span> {owner?.address || bill.apartmentId.address}</p>
-                      <p><span className="font-medium">{locale === "th" ? "โทร" : "Phone"}:</span> {owner?.phone || bill.apartmentId.phone}</p>
+                      <p>
+                        <span className="font-medium">
+                          {locale === "th" ? "ชื่อ" : "Name"}:
+                        </span>{" "}
+                        {owner?.name || bill.apartmentId.name}
+                      </p>
+                      <p>
+                        <span className="font-medium">
+                          {locale === "th" ? "ที่อยู่" : "Address"}:
+                        </span>{" "}
+                        {owner?.address || bill.apartmentId.address}
+                      </p>
+                      <p>
+                        <span className="font-medium">
+                          {locale === "th" ? "โทร" : "Phone"}:
+                        </span>{" "}
+                        {owner?.phone || bill.apartmentId.phone}
+                      </p>
                       {owner?.taxId && (
-                        <p><span className="font-medium">{locale === "th" ? "เลขประจำตัวผู้เสียภาษี" : "Tax ID"}:</span> {owner.taxId}</p>
+                        <p>
+                          <span className="font-medium">
+                            {locale === "th"
+                              ? "เลขประจำตัวผู้เสียภาษี"
+                              : "Tax ID"}
+                            :
+                          </span>{" "}
+                          {owner.taxId}
+                        </p>
                       )}
                     </div>
                   </div>
 
                   {/* Apartment Information Row */}
                   <div className="text-xs mb-2 print:mb-1 border-b border-gray-200 pb-1">
-                    <p className="font-semibold text-gray-800 mb-1">{locale === "th" ? "อพาร์ตเมนต์" : "Apartment"}:</p>
+                    <p className="font-semibold text-gray-800 mb-1">
+                      {locale === "th" ? "อพาร์ตเมนต์" : "Apartment"}:
+                    </p>
                     <div className="grid grid-cols-4 gap-2">
-                      <p><span className="font-medium">{locale === "th" ? "ชื่อ" : "Name"}:</span> {bill.apartmentId.name}</p>
-                      <p><span className="font-medium">{locale === "th" ? "ห้อง" : "Room"}:</span> {bill.roomId.roomNumber}</p>
-                      <p><span className="font-medium">{locale === "th" ? "ที่อยู่" : "Address"}:</span> {bill.apartmentId.address}</p>
-                      <p><span className="font-medium">{locale === "th" ? "โทร" : "Phone"}:</span> {bill.apartmentId.phone}</p>
+                      <p>
+                        <span className="font-medium">
+                          {locale === "th" ? "ชื่อ" : "Name"}:
+                        </span>{" "}
+                        {bill.apartmentId.name}
+                      </p>
+                      <p>
+                        <span className="font-medium">
+                          {locale === "th" ? "ห้อง" : "Room"}:
+                        </span>{" "}
+                        {bill.roomId.roomNumber}
+                      </p>
+                      <p>
+                        <span className="font-medium">
+                          {locale === "th" ? "ที่อยู่" : "Address"}:
+                        </span>{" "}
+                        {bill.apartmentId.address}
+                      </p>
+                      <p>
+                        <span className="font-medium">
+                          {locale === "th" ? "โทร" : "Phone"}:
+                        </span>{" "}
+                        {bill.apartmentId.phone}
+                      </p>
                     </div>
                   </div>
 
                   {/* Tenant Information Row */}
                   <div className="text-xs mb-2 print:mb-1 border-b border-gray-200 pb-1">
-                    <p className="font-semibold text-gray-800 mb-1">{locale === "th" ? "ผู้เช่า" : "Tenant"}:</p>
+                    <p className="font-semibold text-gray-800 mb-1">
+                      {locale === "th" ? "ผู้เช่า" : "Tenant"}:
+                    </p>
                     <div className="grid grid-cols-4 gap-2">
-                      <p><span className="font-medium">{locale === "th" ? "ชื่อ" : "Name"}:</span> {bill.tenantName}</p>
-                      <p><span className="font-medium">{locale === "th" ? "ที่อยู่" : "Address"}:</span> {bill.tenantAddress}</p>
-                      <p><span className="font-medium">{locale === "th" ? "โทร" : "Phone"}:</span> {bill.tenantPhone}</p>
+                      <p>
+                        <span className="font-medium">
+                          {locale === "th" ? "ชื่อ" : "Name"}:
+                        </span>{" "}
+                        {bill.tenantName}
+                      </p>
+                      <p>
+                        <span className="font-medium">
+                          {locale === "th" ? "ที่อยู่" : "Address"}:
+                        </span>{" "}
+                        {bill.tenantAddress}
+                      </p>
+                      <p>
+                        <span className="font-medium">
+                          {locale === "th" ? "โทร" : "Phone"}:
+                        </span>{" "}
+                        {bill.tenantPhone}
+                      </p>
                       {bill.tenantTaxId && (
-                        <p><span className="font-medium">{locale === "th" ? "เลขประจำตัวผู้เสียภาษี" : "Tax ID"}:</span> {bill.tenantTaxId}</p>
+                        <p>
+                          <span className="font-medium">
+                            {locale === "th"
+                              ? "เลขประจำตัวผู้เสียภาษี"
+                              : "Tax ID"}
+                            :
+                          </span>{" "}
+                          {bill.tenantTaxId}
+                        </p>
                       )}
                     </div>
                   </div>
-                  
+
                   {/* Period & Due Date Row */}
                   <div className="text-xs mb-2 print:mb-1 border-b border-gray-200 pb-1">
                     <div className="grid grid-cols-2 gap-4">
-                      <p><span className="font-medium">{locale === "th" ? "ระยะเวลาเช่า" : "Rental Period"}:</span> {formatDate(bill.rentalPeriod.from)} - {formatDate(bill.rentalPeriod.to)}</p>
-                      <p><span className="font-medium">{locale === "th" ? "ครบกำหนดชำระ" : "Payment Due"}:</span> {bill.paymentDueDate ? formatDate(bill.paymentDueDate) : 
-                        new Date(new Date(bill.billingDate).getTime() + 7 * 24 * 60 * 60 * 1000)
-                          .toLocaleDateString(locale === "th" ? "th-TH" : "en-US")}</p>
+                      <p>
+                        <span className="font-medium">
+                          {locale === "th" ? "ระยะเวลาเช่า" : "Rental Period"}:
+                        </span>{" "}
+                        {formatDate(bill.rentalPeriod.from)} -{" "}
+                        {formatDate(bill.rentalPeriod.to)}
+                      </p>
+                      <p>
+                        <span className="font-medium">
+                          {locale === "th" ? "ครบกำหนดชำระ" : "Payment Due"}:
+                        </span>{" "}
+                        {bill.paymentDueDate
+                          ? formatDate(bill.paymentDueDate)
+                          : new Date(
+                              new Date(bill.billingDate).getTime() +
+                                7 * 24 * 60 * 60 * 1000
+                            ).toLocaleDateString(
+                              locale === "th" ? "th-TH" : "en-US"
+                            )}
+                      </p>
                     </div>
                   </div>
-                  
+
                   {/* Billing Table - Compact */}
                   <div className="space-y-1 text-xs">
                     <div className="flex justify-between py-1 border-b border-gray-200">
                       <span>{locale === "th" ? "ค่าเช่า" : "Rent"}</span>
-                      <span className="font-medium">{bill.rent.toLocaleString()}</span>
+                      <span className="font-medium">
+                        {bill.rent.toLocaleString()}
+                      </span>
                     </div>
-                    
-                    {bill.discounts && bill.discounts.length > 0 && (
+
+                    {bill.discounts &&
+                      bill.discounts.length > 0 &&
                       bill.discounts.map((discount, i) => (
-                        <div key={i} className="flex justify-between py-1 border-b border-gray-200">
-                          <span className="truncate">{discount.description}</span>
-                          <span className="text-red-600">-{discount.amount.toLocaleString()}</span>
+                        <div
+                          key={i}
+                          className="flex justify-between py-1 border-b border-gray-200"
+                        >
+                          <span className="truncate">
+                            {discount.description}
+                          </span>
+                          <span className="text-red-600">
+                            -{discount.amount.toLocaleString()}
+                          </span>
                         </div>
-                      ))
-                    )}
-                    
+                      ))}
+
                     <div className="flex justify-between py-1 border-b border-gray-200">
-                      <span className="font-medium">{locale === "th" ? "ค่าเช่าสุทธิ" : "Net Rent"}</span>
-                      <span className="font-semibold">{bill.netRent.toLocaleString()}</span>
+                      <span className="font-medium">
+                        {locale === "th" ? "ค่าเช่าสุทธิ" : "Net Rent"}
+                      </span>
+                      <span className="font-semibold">
+                        {bill.netRent.toLocaleString()}
+                      </span>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4 py-1 border-b border-gray-200">
                       <div>
-                        <span className="font-medium">{locale === "th" ? "ไฟฟ้า" : "Electric"}</span>
-                        {bill.electricity && bill.electricity.endMeter !== undefined && bill.electricity.startMeter !== undefined ? (
+                        <span className="font-medium">
+                          {locale === "th" ? "ไฟฟ้า" : "Electric"}
+                        </span>
+                        {bill.electricity &&
+                        bill.electricity.endMeter !== undefined &&
+                        bill.electricity.startMeter !== undefined ? (
                           <span className="text-[10px] text-gray-500 block">
-                            {(bill.electricity.endMeter - bill.electricity.startMeter).toFixed(0)}u × {bill.electricity.rate} + {bill.electricity.meterFee}
+                            {(
+                              bill.electricity.endMeter -
+                              bill.electricity.startMeter
+                            ).toFixed(0)}
+                            u × {bill.electricity.rate} +{" "}
+                            {bill.electricity.meterFee}
                           </span>
                         ) : (
                           <span className="text-[10px] text-gray-500 block">
@@ -314,42 +440,17 @@ export default function BillPDFPage({
                         )}
                       </div>
                       <div className="text-right">
-                        <span className="font-medium">{bill.electricityCost.toLocaleString()}</span>
+                        <span className="font-medium">
+                          {bill.electricityCost.toLocaleString()}
+                        </span>
                       </div>
                     </div>
 
-                    {bill.customUtilities && bill.customUtilities.length > 0 && (
-                      bill.customUtilities.map((utility, i) => (
-                        <div key={i} className="grid grid-cols-2 gap-4 py-1 border-b border-gray-200">
-                          <div>
-                            <span className="font-medium">{utility.name}</span>
-                            <span className="text-[10px] text-gray-500 block">
-                              {utility.fixedAmount !== undefined ? (
-                                `Fixed: ${utility.fixedAmount}`
-                              ) : utility.startMeter !== undefined && utility.endMeter !== undefined && utility.rate !== undefined ? (
-                                `${(utility.endMeter - utility.startMeter).toFixed(0)}u × ${utility.rate} + ${utility.meterFee || 0}`
-                              ) : (
-                                'Custom'
-                              )}
-                            </span>
-                          </div>
-                          <div className="text-right">
-                            <span className="font-medium">
-                              {utility.fixedAmount !== undefined ? (
-                                utility.fixedAmount.toLocaleString()
-                              ) : utility.startMeter !== undefined && utility.endMeter !== undefined && utility.rate !== undefined ? (
-                                ((utility.endMeter - utility.startMeter) * utility.rate + (utility.meterFee || 0)).toLocaleString()
-                              ) : (
-                                '0'
-                              )}
-                            </span>
-                          </div>
-                        </div>
-                      ))
-                    )}
-
                     {bill.otherFees.map((fee, i) => (
-                      <div key={i} className="flex justify-between py-1 border-b border-gray-200">
+                      <div
+                        key={i}
+                        className="flex justify-between py-1 border-b border-gray-200"
+                      >
                         <span className="truncate">{fee.description}</span>
                         <span>{fee.amount.toLocaleString()}</span>
                       </div>
@@ -361,11 +462,11 @@ export default function BillPDFPage({
                         {locale === "th" ? "รวมทั้งสิ้น" : "Total"}
                       </span>
                       <span className="text-sm font-bold text-green-600 print:text-gray-800">
-                        {bill.grandTotal.toLocaleString()} {locale === "th" ? "บาท" : "THB"}
+                        {bill.grandTotal.toLocaleString()}{" "}
+                        {locale === "th" ? "บาท" : "THB"}
                       </span>
                     </div>
                   </div>
-
                 </div>
               </div>
             ))}

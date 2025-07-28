@@ -56,7 +56,10 @@ export default function NewBillPage() {
     };
     recurringFees: {
       rent: number;
-      discount: number;
+      discounts: Array<{
+        description: string;
+        amount: number;
+      }>;
       airconFee: number;
       fridgeFee: number;
     };
@@ -218,15 +221,11 @@ export default function NewBillPage() {
           fieldsToFill.push("rent");
         }
         if (
-          roomData.recurringFees.discount &&
+          roomData.recurringFees.discounts &&
+          roomData.recurringFees.discounts.length > 0 &&
           formData.discounts.length === 0
         ) {
-          newFormData.discounts = [
-            {
-              description: "Standard Discount",
-              amount: roomData.recurringFees.discount,
-            },
-          ];
+          newFormData.discounts = [...roomData.recurringFees.discounts];
           fieldsToFill.push("discounts");
         }
         if (roomData.recurringFees.airconFee && formData.airconFee === 0) {

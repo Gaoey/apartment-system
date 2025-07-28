@@ -166,7 +166,6 @@
     "feeDescription": "รายละเอียดค่าใช้จ่าย",
     "amount": "จำนวนเงิน",
     "totalOtherFees": "ค่าใช้จ่ายอื่นๆ รวม",
-    "customUtilities": "สาธารณูปโภคเพิ่มเติม",
     "grandTotal": "รวมทั้งสิ้น",
     "currency": "บาท",
     "thb": "บาท",
@@ -197,7 +196,7 @@
     "billNotFound": "ไม่พบใบแจ้งหนี้",
     "discountDescription": "รายละเอียดส่วนลด",
     "totalDiscounts": "ส่วนลดรวม",
-    "discounts": "ส่วนลด", 
+    "discounts": "ส่วนลด",
     "totalCustomUtilities": "สาธารณูปโภคเพิ่มเติมรวม"
   },
   "validation": {
@@ -260,8 +259,7 @@
     "totalBills": "ใบแจ้งหนี้ทั้งหมด",
     "totalRent": "ค่าเช่ารวม",
     "totalElectricity": "ค่าไฟฟ้ารวม",
-    "totalCustomUtilities": "สาธารณูปโภคเพิ่มเติมรวม",
-    "customUtilitiesCost": "สาธารณูปโภคเพิ่มเติม",
+    "totalWater": "ค่าน้ำรวม",
     "totalOtherFees": "ค่าใช้จ่ายอื่นๆ รวม",
     "grandTotal": "รวมทั้งสิ้น",
     "noBills": "ไม่พบใบแจ้งหนี้",

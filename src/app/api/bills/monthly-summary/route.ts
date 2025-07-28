@@ -80,7 +80,7 @@ export async function GET(request: NextRequest) {
         rentalPeriod: bill.rentalPeriod,
         rent: bill.netRent,
         electricityCost: bill.electricityCost,
-        customUtilitiesCost: bill.customUtilitiesCost,
+        waterCost: bill.waterCost,
         otherFeesTotal,
         grandTotal: bill.grandTotal,
         billingDate: bill.billingDate
@@ -99,7 +99,7 @@ export async function GET(request: NextRequest) {
           totalBills: billsWithNumbers.length,
           totalRent: billsWithNumbers.reduce((sum, bill) => sum + bill.rent, 0),
           totalElectricity: billsWithNumbers.reduce((sum, bill) => sum + bill.electricityCost, 0),
-          totalCustomUtilities: billsWithNumbers.reduce((sum, bill) => sum + bill.customUtilitiesCost, 0),
+          totalWater: billsWithNumbers.reduce((sum, bill) => sum + bill.waterCost, 0),
           totalOtherFees: billsWithNumbers.reduce((sum, bill) => sum + bill.otherFeesTotal, 0),
           grandTotal: billsWithNumbers.reduce((sum, bill) => sum + bill.grandTotal, 0)
         }
