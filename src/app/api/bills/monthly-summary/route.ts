@@ -59,8 +59,18 @@ export async function GET(request: NextRequest) {
     // Find all bills within the month range and apartment filter
     const bills = await Bill.find(query)
       .populate("apartmentId", "name")
-      .populate("roomId", "roomNumber")
-      .sort({ "roomId.roomNumber": 1, billingDate: 1 }) as unknown as PopulatedBill[];
+      .populate("roomId", "roomNumber") as unknown as PopulatedBill[];
+
+    // Sort by room number (as string, then convert to number for proper sorting)
+    bills.sort((a, b) => {
+      const roomA = parseInt(a.roomId.roomNumber) || 0;
+      const roomB = parseInt(b.roomId.roomNumber) || 0;
+      if (roomA !== roomB) {
+        return roomA - roomB;
+      }
+      // If room numbers are the same, sort by billing date
+      return new Date(a.billingDate).getTime() - new Date(b.billingDate).getTime();
+    });
 
     // Generate bill numbers with invoice ID as running sequence
     const billsWithNumbers = bills.map((bill, index) => {

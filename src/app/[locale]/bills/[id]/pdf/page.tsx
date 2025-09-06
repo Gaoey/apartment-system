@@ -48,21 +48,21 @@ interface Bill {
     rate: number;
     meterFee: number;
   };
-  customUtilities: Array<{
-    name: string;
-    startMeter?: number;
-    endMeter?: number;
-    rate?: number;
-    meterFee?: number;
-    fixedAmount?: number;
-  }>;
+  water?: {
+    startMeter: number;
+    endMeter: number;
+    rate: number;
+    meterFee: number;
+  };
+  airconFee: number;
+  fridgeFee: number;
   otherFees: Array<{
     description: string;
     amount: number;
   }>;
   netRent: number;
   electricityCost: number;
-  customUtilitiesCost: number;
+  waterCost: number;
   grandTotal: number;
   documentNumber?: string;
   createdAt: string;
@@ -383,15 +383,17 @@ export default function BillPDFPage({
                     </div>
                   </div>
 
-                  {/* Billing Table - Compact */}
+                  {/* Billing Table - Complete Details */}
                   <div className="space-y-1 text-xs">
+                    {/* Rent */}
                     <div className="flex justify-between py-1 border-b border-gray-200">
                       <span>{locale === "th" ? "ค่าเช่า" : "Rent"}</span>
                       <span className="font-medium">
-                        {bill.rent.toLocaleString()}
+                        ฿{bill.rent.toLocaleString()}
                       </span>
                     </div>
 
+                    {/* Discounts */}
                     {bill.discounts &&
                       bill.discounts.length > 0 &&
                       bill.discounts.map((discount, i) => (
@@ -403,66 +405,109 @@ export default function BillPDFPage({
                             {discount.description}
                           </span>
                           <span className="text-red-600">
-                            -{discount.amount.toLocaleString()}
+                            -฿{discount.amount.toLocaleString()}
                           </span>
                         </div>
                       ))}
 
-                    <div className="flex justify-between py-1 border-b border-gray-200">
+                    {/* Net Rent */}
+                    <div className="flex justify-between py-1 border-b border-gray-200 bg-gray-50 print:bg-gray-100">
                       <span className="font-medium">
                         {locale === "th" ? "ค่าเช่าสุทธิ" : "Net Rent"}
                       </span>
                       <span className="font-semibold">
-                        {bill.netRent.toLocaleString()}
+                        ฿{bill.netRent.toLocaleString()}
                       </span>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4 py-1 border-b border-gray-200">
-                      <div>
-                        <span className="font-medium">
-                          {locale === "th" ? "ไฟฟ้า" : "Electric"}
-                        </span>
-                        {bill.electricity &&
-                        bill.electricity.endMeter !== undefined &&
-                        bill.electricity.startMeter !== undefined ? (
-                          <span className="text-[10px] text-gray-500 block">
-                            {(
-                              bill.electricity.endMeter -
-                              bill.electricity.startMeter
-                            ).toFixed(0)}
-                            u × {bill.electricity.rate} +{" "}
-                            {bill.electricity.meterFee}
+                    {/* Electricity */}
+                    <div className="py-1 border-b border-gray-200">
+                      <div className="flex justify-between">
+                        <div className="flex-1">
+                          <span className="font-medium">
+                            {locale === "th" ? "ค่าไฟฟ้า" : "Electricity"}
                           </span>
-                        ) : (
-                          <span className="text-[10px] text-gray-500 block">
-                            N/A
-                          </span>
-                        )}
-                      </div>
-                      <div className="text-right">
+                          {bill.electricity &&
+                          bill.electricity.endMeter !== undefined &&
+                          bill.electricity.startMeter !== undefined ? (
+                            <div className="text-[10px] text-gray-500 mt-1">
+                              ({bill.electricity.endMeter - bill.electricity.startMeter} {locale === "th" ? "หน่วย" : "units"} × ฿{bill.electricity.rate} + ฿{bill.electricity.meterFee} {locale === "th" ? "ค่าบริการ" : "service fee"})
+                            </div>
+                          ) : (
+                            <div className="text-[10px] text-gray-500 mt-1">
+                              {locale === "th" ? "ไม่มีข้อมูล" : "No data"}
+                            </div>
+                          )}
+                        </div>
                         <span className="font-medium">
-                          {bill.electricityCost.toLocaleString()}
+                          ฿{bill.electricityCost.toLocaleString()}
                         </span>
                       </div>
                     </div>
 
+                    {/* Water */}
+                    <div className="py-1 border-b border-gray-200">
+                      <div className="flex justify-between">
+                        <div className="flex-1">
+                          <span className="font-medium">
+                            {locale === "th" ? "ค่าน้ำประปา" : "Water"}
+                          </span>
+                          {bill.water &&
+                          bill.water.endMeter !== undefined &&
+                          bill.water.startMeter !== undefined ? (
+                            <div className="text-[10px] text-gray-500 mt-1">
+                              ({bill.water.endMeter - bill.water.startMeter} {locale === "th" ? "หน่วย" : "units"} × ฿{bill.water.rate} + ฿{bill.water.meterFee} {locale === "th" ? "ค่าบริการ" : "service fee"})
+                            </div>
+                          ) : (
+                            <div className="text-[10px] text-gray-500 mt-1">
+                              {locale === "th" ? "ไม่มีข้อมูล" : "No data"}
+                            </div>
+                          )}
+                        </div>
+                        <span className="font-medium">
+                          ฿{bill.waterCost.toLocaleString()}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Air Conditioning Fee */}
+                    {bill.airconFee > 0 && (
+                      <div className="flex justify-between py-1 border-b border-gray-200">
+                        <span>{locale === "th" ? "ค่าแอร์" : "Air Conditioning"}</span>
+                        <span className="font-medium">
+                          ฿{bill.airconFee.toLocaleString()}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Fridge Fee */}
+                    {bill.fridgeFee > 0 && (
+                      <div className="flex justify-between py-1 border-b border-gray-200">
+                        <span>{locale === "th" ? "ค่าตู้เย็น" : "Refrigerator"}</span>
+                        <span className="font-medium">
+                          ฿{bill.fridgeFee.toLocaleString()}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Other Fees */}
                     {bill.otherFees.map((fee, i) => (
                       <div
                         key={i}
                         className="flex justify-between py-1 border-b border-gray-200"
                       >
                         <span className="truncate">{fee.description}</span>
-                        <span>{fee.amount.toLocaleString()}</span>
+                        <span className="font-medium">฿{fee.amount.toLocaleString()}</span>
                       </div>
                     ))}
 
                     {/* Grand Total */}
                     <div className="flex justify-between py-2 border-t-2 border-gray-400 bg-gray-50 print:bg-gray-100 -mx-3 print:-mx-2 px-3 print:px-2 mt-2">
                       <span className="text-sm font-bold">
-                        {locale === "th" ? "รวมทั้งสิ้น" : "Total"}
+                        {locale === "th" ? "รวมทั้งสิ้น" : "TOTAL AMOUNT"}
                       </span>
                       <span className="text-sm font-bold text-green-600 print:text-gray-800">
-                        {bill.grandTotal.toLocaleString()}{" "}
+                        ฿{bill.grandTotal.toLocaleString()}{" "}
                         {locale === "th" ? "บาท" : "THB"}
                       </span>
                     </div>

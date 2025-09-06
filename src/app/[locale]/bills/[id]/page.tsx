@@ -450,10 +450,8 @@ export default function BillDetailPage({
                     bill.water.startMeter !== undefined ? (
                       <div className="text-sm text-gray-500">
                         {bill.water.endMeter - bill.water.startMeter}{" "}
-                        {t("waterUnit")} ×{" "}
-                        {formatCurrency(bill.water.rate)} +{" "}
-                        {formatCurrency(bill.water.meterFee)}{" "}
-                        {t("meterFee")}
+                        {t("waterUnit")} × {formatCurrency(bill.water.rate)} +{" "}
+                        {formatCurrency(bill.water.meterFee)} {t("meterFee")}
                       </div>
                     ) : (
                       <div className="text-sm text-gray-500">
@@ -484,7 +482,6 @@ export default function BillDetailPage({
                   </div>
                 )}
               </div>
-
 
               {bill.otherFees.length > 0 && (
                 <div className="space-y-2">

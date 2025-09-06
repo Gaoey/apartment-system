@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Home, FileText, Save, X, Plus, Trash2 } from "lucide-react";
 import { useTranslations, useLocale } from "next-intl";
+import { getDefaultBillingDates } from "@/lib/dateUtils";
 
 interface Apartment {
   _id: string;
@@ -67,13 +68,14 @@ export default function NewBillPage() {
   } | null>(null);
   const [showAutoFillNotice, setShowAutoFillNotice] = useState(false);
   const [autoFilledFields, setAutoFilledFields] = useState<string[]>([]);
+
+  const defaultDates = getDefaultBillingDates();
+  
   const [formData, setFormData] = useState({
     apartmentId: searchParams.get("apartmentId") || "",
     roomId: searchParams.get("roomId") || "",
-    billingDate: new Date().toISOString().split("T")[0],
-    paymentDueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
-      .toISOString()
-      .split("T")[0],
+    billingDate: defaultDates.billingDate,
+    paymentDueDate: defaultDates.paymentDueDate,
     tenantName: "",
     tenantAddress: "",
     tenantPhone: "",
@@ -93,7 +95,7 @@ export default function NewBillPage() {
     water: {
       startMeter: 0,
       endMeter: 0,
-      rate: 15,
+      rate: 35,
       meterFee: 50,
     },
     airconFee: 0,
@@ -543,7 +545,8 @@ export default function NewBillPage() {
                     {new Date(autoFillData.lastBillDate).toLocaleDateString(
                       locale === "th" ? "th-TH" : "en-US"
                     )}
-                    . You can modify this information as needed for the new bill.
+                    . You can modify this information as needed for the new
+                    bill.
                   </p>
                 </div>
                 <button

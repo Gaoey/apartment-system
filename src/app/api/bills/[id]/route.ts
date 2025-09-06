@@ -63,15 +63,9 @@ export async function PUT(
     
     console.log('Updating bill:', id, body);
     
-    const updatedBill = await Bill.findByIdAndUpdate(
-      id,
-      body,
-      { new: true, runValidators: true }
-    )
-      .populate('apartmentId', 'name address phone taxId')
-      .populate('roomId', 'roomNumber');
+    const bill = await Bill.findById(id);
     
-    if (!updatedBill) {
+    if (!bill) {
       return NextResponse.json(
         {
           success: false,
@@ -80,6 +74,17 @@ export async function PUT(
         { status: 404 }
       );
     }
+    
+    // Update the bill with new data
+    Object.assign(bill, body);
+    
+    // Save to trigger pre-save hook for calculations
+    const updatedBill = await bill.save();
+    
+    // Populate after save
+    await updatedBill.populate('apartmentId', 'name address phone taxId');
+    await updatedBill.populate('roomId', 'roomNumber');
+    
     
     return NextResponse.json({
       success: true,
