@@ -63,6 +63,10 @@ export default function NewBillPage() {
       }>;
       airconFee: number;
       fridgeFee: number;
+      otherFees: Array<{
+        description: string;
+        amount: number;
+      }>;
     };
     lastBillDate: string;
   } | null>(null);
@@ -237,6 +241,14 @@ export default function NewBillPage() {
         if (roomData.recurringFees.fridgeFee && formData.fridgeFee === 0) {
           newFormData.fridgeFee = roomData.recurringFees.fridgeFee;
           fieldsToFill.push("fridgeFee");
+        }
+        if (
+          roomData.recurringFees.otherFees &&
+          roomData.recurringFees.otherFees.length > 0 &&
+          formData.otherFees.length === 0
+        ) {
+          newFormData.otherFees = [...roomData.recurringFees.otherFees];
+          fieldsToFill.push("otherFees");
         }
 
         if (fieldsToFill.length > 0) {

@@ -82,6 +82,46 @@ export default function EditBillPage({
     amount: 0,
   });
 
+  const [autoFillData, setAutoFillData] = useState<{
+    hasData: boolean;
+    roomNumber: string;
+    tenantInfo: {
+      tenantName: string;
+      tenantAddress: string;
+      tenantPhone: string;
+      tenantTaxId: string;
+      lastUpdated: string;
+    };
+    meterReadings: {
+      electricity: {
+        endMeter: number;
+        rate: number;
+        meterFee: number;
+      };
+      water: {
+        endMeter: number;
+        rate: number;
+        meterFee: number;
+      };
+    };
+    recurringFees: {
+      rent: number;
+      discounts: Array<{
+        description: string;
+        amount: number;
+      }>;
+      airconFee: number;
+      fridgeFee: number;
+      otherFees: Array<{
+        description: string;
+        amount: number;
+      }>;
+    };
+    lastBillDate: string;
+  } | null>(null);
+  const [showAutoFillNotice, setShowAutoFillNotice] = useState(false);
+  const [autoFilledFields, setAutoFilledFields] = useState<string[]>([]);
+
   useEffect(() => {
     const getParams = async () => {
       const resolvedParams = await params;
@@ -107,6 +147,12 @@ export default function EditBillPage({
       setRooms([]);
     }
   }, [selectedApartmentId]);
+
+  useEffect(() => {
+    if (formData.roomId && !initialLoading) {
+      fetchLatestRoomData(formData.roomId);
+    }
+  }, [formData.roomId, initialLoading]);
 
   const fetchBillData = async () => {
     try {
@@ -174,6 +220,41 @@ export default function EditBillPage({
       }
     } catch (error) {
       console.error("Error fetching rooms:", error);
+    }
+  };
+
+  const fetchLatestRoomData = async (roomId: string) => {
+    try {
+      const response = await fetch(
+        `/api/bills/latest-room-data?roomId=${roomId}`
+      );
+      const data = await response.json();
+
+      if (data.success && data.data.hasData) {
+        const roomData = data.data;
+        setAutoFillData(roomData);
+
+        // Auto-fill additional other fees if current bill has none
+        const fieldsToFill: string[] = [];
+        const newFormData = { ...formData };
+
+        if (
+          roomData.recurringFees.otherFees &&
+          roomData.recurringFees.otherFees.length > 0 &&
+          formData.otherFees.length === 0
+        ) {
+          newFormData.otherFees = [...roomData.recurringFees.otherFees];
+          fieldsToFill.push("otherFees");
+        }
+
+        if (fieldsToFill.length > 0) {
+          setFormData(newFormData);
+          setAutoFilledFields(fieldsToFill);
+          setShowAutoFillNotice(true);
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching latest room data:", error);
     }
   };
 
@@ -347,11 +428,19 @@ export default function EditBillPage({
 
   const getInputClassName = (fieldName: string, baseClassName: string) => {
     const hasError = fieldErrors[fieldName];
-    return `${baseClassName} ${
-      hasError
-        ? "border-red-500 focus:border-red-500 focus:ring-red-500"
-        : "border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-    }`;
+    const isAutoFilled = autoFilledFields.includes(fieldName);
+
+    if (hasError) {
+      return `${baseClassName} border-red-500 focus:border-red-500 focus:ring-red-500`;
+    } else if (isAutoFilled) {
+      return `${baseClassName} border-green-300 bg-green-50 focus:border-green-500 focus:ring-green-500`;
+    } else {
+      return `${baseClassName} border-gray-300 focus:border-blue-500 focus:ring-blue-500`;
+    }
+  };
+
+  const isFieldAutoFilled = (fieldName: string) => {
+    return autoFilledFields.includes(fieldName);
   };
 
   const addOtherFee = () => {
@@ -457,6 +546,33 @@ export default function EditBillPage({
         </div>
 
         <div className="max-w-4xl mx-auto">
+          {showAutoFillNotice && autoFillData && (
+            <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+              <div className="flex items-start justify-between">
+                <div>
+                  <h4 className="text-green-800 font-medium mb-2">
+                    📋 Information Auto-filled from Previous Bill
+                  </h4>
+                  <p className="text-green-700 text-sm mb-2">
+                    Additional fees have been automatically filled from the last bill for this room (
+                    {autoFillData.roomNumber}) dated{" "}
+                    {new Date(autoFillData.lastBillDate).toLocaleDateString(
+                      locale === "th" ? "th-TH" : "en-US"
+                    )}
+                    . You can modify this information as needed for this bill.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowAutoFillNotice(false)}
+                  className="text-green-600 hover:text-green-800 ml-4"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+          )}
+
           {errors.length > 0 && (
             <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
               <h4 className="text-red-800 font-medium mb-2">
@@ -957,6 +1073,11 @@ export default function EditBillPage({
                       <div className="border-t pt-4">
                         <h5 className="font-medium mb-3">
                           {t("additionalOtherFees")}
+                          {isFieldAutoFilled("otherFees") && (
+                            <span className="ml-2 text-xs text-green-600 bg-green-100 px-2 py-1 rounded">
+                              Auto-filled
+                            </span>
+                          )}
                         </h5>
 
                         {formData.otherFees.length > 0 && (

@@ -89,7 +89,8 @@ export async function GET(request: NextRequest) {
         rent: latestBill.rent,
         discounts: latestBill.discounts || [],
         airconFee: latestBill.airconFee,
-        fridgeFee: latestBill.fridgeFee
+        fridgeFee: latestBill.fridgeFee,
+        otherFees: latestBill.otherFees || []
       },
       
       // Metadata

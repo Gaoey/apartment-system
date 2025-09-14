@@ -126,6 +126,43 @@ export default function BillPDFPage({
     window.print();
   };
 
+  // Dynamic sizing calculations
+  const getTotalFees = () => {
+    let count = 1; // rent
+    count += bill?.discounts?.length || 0;
+    count += 1; // net rent
+    count += 2; // electricity + water
+    if (bill?.airconFee && bill.airconFee > 0) count += 1;
+    if (bill?.fridgeFee && bill.fridgeFee > 0) count += 1;
+    count += bill?.otherFees?.length || 0;
+    count += 1; // total
+    return count;
+  };
+
+  const getContentScale = () => {
+    if (!bill) return 'normal';
+    const totalItems = getTotalFees();
+    // For single A4 page, be more conservative with sizing
+    if (totalItems <= 6) return 'normal';
+    if (totalItems <= 10) return 'small';
+    if (totalItems <= 14) return 'tiny';
+    return 'micro';
+  };
+
+  const getAddressLength = () => {
+    const ownerAddr = owner?.address || bill?.apartmentId?.address || '';
+    const tenantAddr = bill?.tenantAddress || '';
+    const maxLength = Math.max(ownerAddr.length, tenantAddr.length);
+    return maxLength;
+  };
+
+  const getGridCols = () => {
+    const addressLength = getAddressLength();
+    if (addressLength > 80) return 'grid-cols-2';
+    if (addressLength > 60) return 'grid-cols-3';
+    return 'grid-cols-4';
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -191,23 +228,38 @@ export default function BillPDFPage({
           </div>
         </div>
 
-        {/* PDF Content - Compact Bill Design for A4 */}
-        <div className="container mx-auto px-4 py-4 print:p-2 print:m-0 max-w-2xl print:max-w-full">
-          {/* Two sections on single page */}
-          <div className="space-y-6 print:space-y-4">
+        {/* PDF Content - Single A4 Page Layout */}
+        <div className="container mx-auto px-4 py-4 print:p-2 print:m-0 max-w-2xl print:max-w-full print:h-screen">
+          {/* Two receipts on single A4 page - Fixed height distribution */}
+          <div className="space-y-6 print:space-y-3 print:h-full print:flex print:flex-col print:justify-between">
             {["Original", "Customer Copy"].map((copyType) => (
               <div
                 key={copyType}
-                className="bg-white border border-gray-300 rounded-lg print:rounded-none print:border-gray-800 print:h-auto print:min-h-[350px]"
+                className={`bg-white border border-gray-300 rounded-lg print:rounded-none print:border-gray-800 print:flex-1 print:h-auto print:max-h-[48vh] print:overflow-hidden ${
+                  getContentScale() === 'normal' ? 'print:text-xs' :
+                  getContentScale() === 'small' ? 'print:text-[11px]' :
+                  getContentScale() === 'tiny' ? 'print:text-[10px]' :
+                  'print:text-[9px]'
+                }`}
               >
-                {/* Header Section - Compact */}
-                <div className="bg-gray-50 print:bg-white border-b border-gray-300 print:border-gray-800 p-3 print:p-2">
+                {/* Header Section - Compact for Single Page */}
+                <div className={`bg-gray-50 print:bg-white border-b border-gray-300 print:border-gray-800 ${
+                  getContentScale() === 'normal' ? 'p-2 print:p-1.5' :
+                  'p-2 print:p-1'
+                }`}>
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
-                      <h1 className="text-base print:text-sm font-bold text-gray-900">
+                      <h1 className={`font-bold text-gray-900 ${
+                        getContentScale() === 'normal' ? 'text-sm print:text-xs' :
+                        getContentScale() === 'small' ? 'text-xs print:text-[10px]' :
+                        'text-[10px] print:text-[9px]'
+                      }`}>
                         {owner?.name || bill.apartmentId.name}
                       </h1>
-                      <div className="text-xs text-gray-600">
+                      <div className={`text-gray-600 ${
+                        getContentScale() === 'normal' ? 'text-[10px]' :
+                        'text-[9px]'
+                      }`}>
                         <p className="truncate">
                           {owner?.address || bill.apartmentId.address}
                         </p>
@@ -226,19 +278,35 @@ export default function BillPDFPage({
                       </div>
                     </div>
                     <div className="text-center mx-3">
-                      <h2 className="text-lg print:text-base font-bold text-blue-600 print:text-gray-800">
+                      <h2 className={`font-bold text-black-600 print:text-gray-800 ${
+                        getContentScale() === 'normal' ? 'text-base print:text-sm' :
+                        getContentScale() === 'small' ? 'text-sm print:text-xs' :
+                        'text-xs print:text-[10px]'
+                      }`}>
                         {locale === "th" ? "ใบแจ้งหนี้" : "BILL"}
                       </h2>
-                      <p className="text-sm print:text-xs font-semibold">
+                      <p className={`font-semibold ${
+                        getContentScale() === 'normal' ? 'text-xs print:text-[10px]' :
+                        'text-[10px] print:text-[9px]'
+                      }`}>
                         #{bill.runningNumber}
                       </p>
-                      <p className="text-xs">{formatDate(bill.billingDate)}</p>
+                      <p className={`${
+                        getContentScale() === 'normal' ? 'text-[10px]' :
+                        'text-[9px]'
+                      }`}>{formatDate(bill.billingDate)}</p>
                     </div>
                     <div className="text-right">
-                      <div className="bg-blue-100 print:bg-gray-100 px-2 py-1 rounded print:rounded-none">
-                        <p className="text-xs font-bold">{copyType}</p>
+                      <div className="bg-black-100 print:bg-gray-100 px-2 py-1 rounded print:rounded-none">
+                        <p className={`font-bold ${
+                          getContentScale() === 'normal' ? 'text-[10px]' :
+                          'text-[9px]'
+                        }`}>{copyType}</p>
                       </div>
-                      <p className="text-xs text-gray-500">
+                      <p className={`text-gray-500 ${
+                        getContentScale() === 'normal' ? 'text-[10px]' :
+                        'text-[9px]'
+                      }`}>
                         {locale === "th" ? "ห้อง" : "Room"}:{" "}
                         {bill.roomId.roomNumber}
                       </p>
@@ -246,14 +314,21 @@ export default function BillPDFPage({
                   </div>
                 </div>
 
-                {/* Main Content - Ultra Compact */}
-                <div className="p-3 print:p-2">
+                {/* Main Content - Compact */}
+                <div className={`print:flex-1 print:overflow-hidden ${
+                  getContentScale() === 'normal' ? 'p-2 print:p-1.5' :
+                  'p-1.5 print:p-1'
+                }`}>
                   {/* Owner Information Row */}
-                  <div className="text-xs mb-2 print:mb-1 border-b border-gray-200 pb-1">
+                  <div className={`border-b border-gray-200 pb-1 ${
+                    getContentScale() === 'normal' ? 'text-[10px] mb-1.5 print:mb-1' :
+                    getContentScale() === 'small' ? 'text-[9px] mb-1 print:mb-0.5' :
+                    'text-[8px] mb-0.5 print:mb-0.5'
+                  }`}>
                     <p className="font-semibold text-gray-800 mb-1">
                       {locale === "th" ? "ผู้ให้เช่า" : "Landlord"}:
                     </p>
-                    <div className="grid grid-cols-4 gap-2">
+                    <div className={`grid ${getGridCols()} gap-2 ${getContentScale() === 'tiny' ? 'gap-1' : ''}`}>
                       <p>
                         <span className="font-medium">
                           {locale === "th" ? "ชื่อ" : "Name"}:
@@ -287,11 +362,15 @@ export default function BillPDFPage({
                   </div>
 
                   {/* Apartment Information Row */}
-                  <div className="text-xs mb-2 print:mb-1 border-b border-gray-200 pb-1">
+                  <div className={`border-b border-gray-200 pb-1 ${
+                    getContentScale() === 'normal' ? 'text-[10px] mb-1.5 print:mb-1' :
+                    getContentScale() === 'small' ? 'text-[9px] mb-1 print:mb-0.5' :
+                    'text-[8px] mb-0.5 print:mb-0.5'
+                  }`}>
                     <p className="font-semibold text-gray-800 mb-1">
                       {locale === "th" ? "อพาร์ตเมนต์" : "Apartment"}:
                     </p>
-                    <div className="grid grid-cols-4 gap-2">
+                    <div className={`grid ${getGridCols()} gap-2 ${getContentScale() === 'tiny' ? 'gap-1' : ''}`}>
                       <p>
                         <span className="font-medium">
                           {locale === "th" ? "ชื่อ" : "Name"}:
@@ -320,11 +399,15 @@ export default function BillPDFPage({
                   </div>
 
                   {/* Tenant Information Row */}
-                  <div className="text-xs mb-2 print:mb-1 border-b border-gray-200 pb-1">
+                  <div className={`border-b border-gray-200 pb-1 ${
+                    getContentScale() === 'normal' ? 'text-[10px] mb-1.5 print:mb-1' :
+                    getContentScale() === 'small' ? 'text-[9px] mb-1 print:mb-0.5' :
+                    'text-[8px] mb-0.5 print:mb-0.5'
+                  }`}>
                     <p className="font-semibold text-gray-800 mb-1">
                       {locale === "th" ? "ผู้เช่า" : "Tenant"}:
                     </p>
-                    <div className="grid grid-cols-4 gap-2">
+                    <div className={`grid ${getGridCols()} gap-2 ${getContentScale() === 'tiny' ? 'gap-1' : ''}`}>
                       <p>
                         <span className="font-medium">
                           {locale === "th" ? "ชื่อ" : "Name"}:
@@ -358,7 +441,11 @@ export default function BillPDFPage({
                   </div>
 
                   {/* Period & Due Date Row */}
-                  <div className="text-xs mb-2 print:mb-1 border-b border-gray-200 pb-1">
+                  <div className={`border-b border-gray-200 pb-1 ${
+                    getContentScale() === 'normal' ? 'text-[10px] mb-1.5 print:mb-1' :
+                    getContentScale() === 'small' ? 'text-[9px] mb-1 print:mb-0.5' :
+                    'text-[8px] mb-0.5 print:mb-0.5'
+                  }`}>
                     <div className="grid grid-cols-2 gap-4">
                       <p>
                         <span className="font-medium">
@@ -383,8 +470,13 @@ export default function BillPDFPage({
                     </div>
                   </div>
 
-                  {/* Billing Table - Complete Details */}
-                  <div className="space-y-1 text-xs">
+                  {/* Billing Table - Compact Details */}
+                  <div className={`${
+                    getContentScale() === 'normal' ? 'space-y-1 text-[10px]' :
+                    getContentScale() === 'small' ? 'space-y-0.5 text-[9px]' :
+                    getContentScale() === 'tiny' ? 'space-y-0.5 text-[8px]' :
+                    'space-y-0 text-[8px]'
+                  }`}>
                     {/* Rent */}
                     <div className="flex justify-between py-1 border-b border-gray-200">
                       <span>{locale === "th" ? "ค่าเช่า" : "Rent"}</span>
@@ -404,7 +496,7 @@ export default function BillPDFPage({
                           <span className="truncate">
                             {discount.description}
                           </span>
-                          <span className="text-red-600">
+                          <span className="text-black-600">
                             -฿{discount.amount.toLocaleString()}
                           </span>
                         </div>
@@ -430,11 +522,29 @@ export default function BillPDFPage({
                           {bill.electricity &&
                           bill.electricity.endMeter !== undefined &&
                           bill.electricity.startMeter !== undefined ? (
-                            <div className="text-[10px] text-gray-500 mt-1">
-                              ({bill.electricity.endMeter - bill.electricity.startMeter} {locale === "th" ? "หน่วย" : "units"} × ฿{bill.electricity.rate} + ฿{bill.electricity.meterFee} {locale === "th" ? "ค่าบริการ" : "service fee"})
+                            <div className={`text-gray-500 mt-1 ${
+                              getContentScale() === 'normal' ? 'text-[8px]' :
+                              getContentScale() === 'small' ? 'text-[7px]' :
+                              'text-[7px]'
+                            }`}>
+                              {locale === "th" ? "มิเตอร์เดิม" : "Start Meter"}:{" "}
+                              {bill.electricity.startMeter} |{" "}
+                              {locale === "th" ? "มิเตอร์ใหม่" : "End Meter"}:{" "}
+                              {bill.electricity.endMeter}
+                              <br />(
+                              {bill.electricity.endMeter -
+                                bill.electricity.startMeter}{" "}
+                              {locale === "th" ? "หน่วย" : "units"} × ฿
+                              {bill.electricity.rate} + ฿
+                              {bill.electricity.meterFee}{" "}
+                              {locale === "th" ? "ค่าบริการ" : "service fee"})
                             </div>
                           ) : (
-                            <div className="text-[10px] text-gray-500 mt-1">
+                            <div className={`text-gray-500 mt-1 ${
+                              getContentScale() === 'normal' ? 'text-[8px]' :
+                              getContentScale() === 'small' ? 'text-[7px]' :
+                              'text-[7px]'
+                            }`}>
                               {locale === "th" ? "ไม่มีข้อมูล" : "No data"}
                             </div>
                           )}
@@ -455,11 +565,27 @@ export default function BillPDFPage({
                           {bill.water &&
                           bill.water.endMeter !== undefined &&
                           bill.water.startMeter !== undefined ? (
-                            <div className="text-[10px] text-gray-500 mt-1">
-                              ({bill.water.endMeter - bill.water.startMeter} {locale === "th" ? "หน่วย" : "units"} × ฿{bill.water.rate} + ฿{bill.water.meterFee} {locale === "th" ? "ค่าบริการ" : "service fee"})
+                            <div className={`text-gray-500 mt-1 ${
+                              getContentScale() === 'normal' ? 'text-[8px]' :
+                              getContentScale() === 'small' ? 'text-[7px]' :
+                              'text-[7px]'
+                            }`}>
+                              {locale === "th" ? "มิเตอร์เดิม" : "Start Meter"}:{" "}
+                              {bill.water.startMeter} |{" "}
+                              {locale === "th" ? "มิเตอร์ใหม่" : "End Meter"}:{" "}
+                              {bill.water.endMeter}
+                              <br />(
+                              {bill.water.endMeter - bill.water.startMeter}{" "}
+                              {locale === "th" ? "หน่วย" : "units"} × ฿
+                              {bill.water.rate} + ฿{bill.water.meterFee}{" "}
+                              {locale === "th" ? "ค่าบริการ" : "service fee"})
                             </div>
                           ) : (
-                            <div className="text-[10px] text-gray-500 mt-1">
+                            <div className={`text-gray-500 mt-1 ${
+                              getContentScale() === 'normal' ? 'text-[8px]' :
+                              getContentScale() === 'small' ? 'text-[7px]' :
+                              'text-[7px]'
+                            }`}>
                               {locale === "th" ? "ไม่มีข้อมูล" : "No data"}
                             </div>
                           )}
@@ -473,7 +599,9 @@ export default function BillPDFPage({
                     {/* Air Conditioning Fee */}
                     {bill.airconFee > 0 && (
                       <div className="flex justify-between py-1 border-b border-gray-200">
-                        <span>{locale === "th" ? "ค่าแอร์" : "Air Conditioning"}</span>
+                        <span>
+                          {locale === "th" ? "ค่าแอร์" : "Air Conditioning"}
+                        </span>
                         <span className="font-medium">
                           ฿{bill.airconFee.toLocaleString()}
                         </span>
@@ -483,7 +611,9 @@ export default function BillPDFPage({
                     {/* Fridge Fee */}
                     {bill.fridgeFee > 0 && (
                       <div className="flex justify-between py-1 border-b border-gray-200">
-                        <span>{locale === "th" ? "ค่าตู้เย็น" : "Refrigerator"}</span>
+                        <span>
+                          {locale === "th" ? "ค่าตู้เย็น" : "Refrigerator"}
+                        </span>
                         <span className="font-medium">
                           ฿{bill.fridgeFee.toLocaleString()}
                         </span>
@@ -497,16 +627,30 @@ export default function BillPDFPage({
                         className="flex justify-between py-1 border-b border-gray-200"
                       >
                         <span className="truncate">{fee.description}</span>
-                        <span className="font-medium">฿{fee.amount.toLocaleString()}</span>
+                        <span className="font-medium">
+                          ฿{fee.amount.toLocaleString()}
+                        </span>
                       </div>
                     ))}
 
                     {/* Grand Total */}
-                    <div className="flex justify-between py-2 border-t-2 border-gray-400 bg-gray-50 print:bg-gray-100 -mx-3 print:-mx-2 px-3 print:px-2 mt-2">
-                      <span className="text-sm font-bold">
+                    <div className={`flex justify-between border-t-2 border-gray-400 bg-gray-50 print:bg-gray-100 mt-1 ${
+                      getContentScale() === 'normal' ? 'py-1.5 -mx-2 print:-mx-1.5 px-2 print:px-1.5' :
+                      getContentScale() === 'small' ? 'py-1 -mx-1.5 print:-mx-1 px-1.5 print:px-1' :
+                      'py-1 -mx-1 print:-mx-1 px-1 print:px-1'
+                    }`}>
+                      <span className={`font-bold ${
+                        getContentScale() === 'normal' ? 'text-xs' :
+                        getContentScale() === 'small' ? 'text-[10px]' :
+                        'text-[9px]'
+                      }`}>
                         {locale === "th" ? "รวมทั้งสิ้น" : "TOTAL AMOUNT"}
                       </span>
-                      <span className="text-sm font-bold text-green-600 print:text-gray-800">
+                      <span className={`font-bold text-black-600 print:text-gray-800 ${
+                        getContentScale() === 'normal' ? 'text-xs' :
+                        getContentScale() === 'small' ? 'text-[10px]' :
+                        'text-[9px]'
+                      }`}>
                         ฿{bill.grandTotal.toLocaleString()}{" "}
                         {locale === "th" ? "บาท" : "THB"}
                       </span>
@@ -519,19 +663,25 @@ export default function BillPDFPage({
         </div>
       </div>
 
-      {/* Print Styles */}
+      {/* Single A4 Page Print Styles - Both Receipts */}
       <style jsx global>{`
         @media print {
           @page {
-            margin: 0.5cm;
+            margin: 0.3cm;
             size: A4 portrait;
           }
-          body {
+          * {
             -webkit-print-color-adjust: exact;
             color-adjust: exact;
+            print-color-adjust: exact;
+          }
+          body {
             margin: 0 !important;
             padding: 0 !important;
+            font-size: 10px !important;
+            line-height: 1.1 !important;
           }
+
           /* Force hide header and navigation */
           header,
           nav,
@@ -545,21 +695,76 @@ export default function BillPDFPage({
             margin: 0 !important;
             padding: 0 !important;
           }
-          /* Ensure proper page layout */
-          .print\\:h-auto {
-            height: auto !important;
+
+          /* Single page layout - critical for A4 */
+          .print\\:h-screen {
+            height: 100vh !important;
           }
-          .print\\:min-h-\\[350px\\] {
-            min-height: 350px !important;
+          .print\\:h-full {
+            height: 100% !important;
           }
-          .print\\:space-y-4 > * + * {
-            margin-top: 1rem !important;
+          .print\\:flex {
+            display: flex !important;
           }
+          .print\\:flex-col {
+            flex-direction: column !important;
+          }
+          .print\\:justify-between {
+            justify-content: space-between !important;
+          }
+          .print\\:flex-1 {
+            flex: 1 !important;
+          }
+          .print\\:max-h-\\[48vh\\] {
+            max-height: 48vh !important;
+          }
+          .print\\:overflow-hidden {
+            overflow: hidden !important;
+          }
+
+          /* Single page spacing - minimal */
+          .print\\:space-y-3 > * + * {
+            margin-top: 0.75rem !important;
+          }
+          .print\\:mb-0\\.5 {
+            margin-bottom: 0.125rem !important;
+          }
+          .print\\:mb-1 {
+            margin-bottom: 0.25rem !important;
+          }
+
           .print\\:max-w-full {
             max-width: 100% !important;
             width: 100% !important;
           }
-          /* Remove web-specific styling */
+
+          /* Ultra compact typography */
+          .print\\:text-\\[10px\\] {
+            font-size: 10px !important;
+            line-height: 1.1 !important;
+          }
+          .print\\:text-\\[9px\\] {
+            font-size: 9px !important;
+            line-height: 1.0 !important;
+          }
+          .print\\:text-\\[8px\\] {
+            font-size: 8px !important;
+            line-height: 1.0 !important;
+          }
+          .print\\:text-\\[7px\\] {
+            font-size: 7px !important;
+            line-height: 1.0 !important;
+          }
+          .print\\:text-xs {
+            font-size: 10px !important;
+            line-height: 1.1 !important;
+          }
+          .print\\:text-sm {
+            font-size: 11px !important;
+            line-height: 1.2 !important;
+          }
+
+          /* Colors and styling */
           .print\\:text-gray-800 {
             color: #1f2937 !important;
           }
@@ -571,15 +776,74 @@ export default function BillPDFPage({
           }
           .print\\:border-gray-800 {
             border-color: #1f2937 !important;
+            border-width: 1px !important;
           }
           .print\\:rounded-none {
             border-radius: 0 !important;
           }
-          .print\\:p-2 {
-            padding: 0.5rem !important;
+
+          /* Minimal padding for space efficiency */
+          .print\\:p-1 {
+            padding: 0.15rem !important;
           }
-          .print\\:m-0 {
-            margin: 0 !important;
+          .print\\:p-1\\.5 {
+            padding: 0.25rem !important;
+          }
+          .print\\:p-2 {
+            padding: 0.35rem !important;
+          }
+          .print\\:px-1 {
+            padding-left: 0.15rem !important;
+            padding-right: 0.15rem !important;
+          }
+          .print\\:px-1\\.5 {
+            padding-left: 0.25rem !important;
+            padding-right: 0.25rem !important;
+          }
+          .print\\:px-2 {
+            padding-left: 0.35rem !important;
+            padding-right: 0.35rem !important;
+          }
+          .print\\:-mx-1 {
+            margin-left: -0.15rem !important;
+            margin-right: -0.15rem !important;
+          }
+          .print\\:-mx-1\\.5 {
+            margin-left: -0.25rem !important;
+            margin-right: -0.25rem !important;
+          }
+          .print\\:-mx-2 {
+            margin-left: -0.35rem !important;
+            margin-right: -0.35rem !important;
+          }
+
+          /* Text overflow handling */
+          .truncate {
+            white-space: normal !important;
+            overflow: visible !important;
+            text-overflow: clip !important;
+            word-break: break-word !important;
+            hyphens: auto !important;
+          }
+
+          /* Grid responsiveness */
+          .grid-cols-2 {
+            display: grid !important;
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+          }
+          .grid-cols-3 {
+            display: grid !important;
+            grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+          }
+          .grid-cols-4 {
+            display: grid !important;
+            grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+          }
+
+          /* Prevent page breaks */
+          .bg-white {
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
           }
         }
       `}</style>
