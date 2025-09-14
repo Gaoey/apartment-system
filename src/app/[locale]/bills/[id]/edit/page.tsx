@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Home, FileText, Save, X, Plus, Trash2 } from "lucide-react";
 import { useTranslations, useLocale } from "next-intl";
-import { getDefaultBillingDates } from "@/lib/dateUtils";
+import { getDefaultBillingDates, getDefaultPeriod } from "@/lib/dateUtils";
 
 interface Apartment {
   _id: string;
@@ -36,9 +36,10 @@ export default function EditBillPage({
   const [rooms, setRooms] = useState<Room[]>([]);
   const [billId, setBillId] = useState<string>("");
   const [selectedApartmentId, setSelectedApartmentId] = useState("");
-  
+
   const defaultDates = getDefaultBillingDates();
-  
+  const { startPeriod, endPeriod } = getDefaultPeriod();
+
   const [formData, setFormData] = useState({
     apartmentId: "",
     roomId: "",
@@ -49,8 +50,8 @@ export default function EditBillPage({
     tenantPhone: "",
     tenantTaxId: "",
     rentalPeriod: {
-      from: "",
-      to: "",
+      from: startPeriod,
+      to: endPeriod,
     },
     rent: 0,
     discounts: [] as { description: string; amount: number }[],
