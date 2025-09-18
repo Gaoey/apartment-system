@@ -344,57 +344,7 @@ export default function BillPDFPage({
                       : "p-1.5 print:p-1"
                   }`}
                 >
-                  {/* Owner Information Row */}
-                  <div
-                    className={`border-b border-gray-200 pb-1 ${
-                      getContentScale() === "normal"
-                        ? "text-[10px] mb-1.5 print:mb-1"
-                        : getContentScale() === "small"
-                        ? "text-[9px] mb-1 print:mb-0.5"
-                        : "text-[8px] mb-0.5 print:mb-0.5"
-                    }`}
-                  >
-                    <p className="font-semibold text-gray-800 mb-1">
-                      {locale === "th" ? "ผู้ให้เช่า" : "Landlord"}:
-                    </p>
-                    <div
-                      className={`grid ${getGridCols()} gap-2 ${
-                        getContentScale() === "tiny" ? "gap-1" : ""
-                      }`}
-                    >
-                      <p>
-                        <span className="font-medium">
-                          {locale === "th" ? "ชื่อ" : "Name"}:
-                        </span>{" "}
-                        {owner?.name || bill.apartmentId.name}
-                      </p>
-                      <p>
-                        <span className="font-medium">
-                          {locale === "th" ? "ที่อยู่" : "Address"}:
-                        </span>{" "}
-                        {owner?.address || bill.apartmentId.address}
-                      </p>
-                      <p>
-                        <span className="font-medium">
-                          {locale === "th" ? "โทร" : "Phone"}:
-                        </span>{" "}
-                        {owner?.phone || bill.apartmentId.phone}
-                      </p>
-                      {owner?.taxId && (
-                        <p>
-                          <span className="font-medium">
-                            {locale === "th"
-                              ? "เลขประจำตัวผู้เสียภาษี"
-                              : "Tax ID"}
-                            :
-                          </span>{" "}
-                          {owner.taxId}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Apartment Information Row */}
+                  {/* Apartment Information Row - First */}
                   <div
                     className={`border-b border-gray-200 pb-1 ${
                       getContentScale() === "normal"
@@ -439,7 +389,7 @@ export default function BillPDFPage({
                     </div>
                   </div>
 
-                  {/* Tenant Information Row */}
+                  {/* Owner and Tenant Information Row - Side by Side */}
                   <div
                     className={`border-b border-gray-200 pb-1 ${
                       getContentScale() === "normal"
@@ -449,43 +399,82 @@ export default function BillPDFPage({
                         : "text-[8px] mb-0.5 print:mb-0.5"
                     }`}
                   >
-                    <p className="font-semibold text-gray-800 mb-1">
-                      {locale === "th" ? "ผู้เช่า" : "Tenant"}:
-                    </p>
-                    <div
-                      className={`grid ${getGridCols()} gap-2 ${
-                        getContentScale() === "tiny" ? "gap-1" : ""
-                      }`}
-                    >
-                      <p>
-                        <span className="font-medium">
-                          {locale === "th" ? "ชื่อ" : "Name"}:
-                        </span>{" "}
-                        {bill.tenantName}
-                      </p>
-                      <p>
-                        <span className="font-medium">
-                          {locale === "th" ? "ที่อยู่" : "Address"}:
-                        </span>{" "}
-                        {bill.tenantAddress}
-                      </p>
-                      <p>
-                        <span className="font-medium">
-                          {locale === "th" ? "โทร" : "Phone"}:
-                        </span>{" "}
-                        {bill.tenantPhone}
-                      </p>
-                      {bill.tenantTaxId && (
-                        <p>
-                          <span className="font-medium">
-                            {locale === "th"
-                              ? "เลขประจำตัวผู้เสียภาษี"
-                              : "Tax ID"}
-                            :
-                          </span>{" "}
-                          {bill.tenantTaxId}
+                    <div className="grid grid-cols-2 gap-4">
+                      {/* Owner Information - Left Column */}
+                      <div>
+                        <p className="font-semibold text-gray-800 mb-1">
+                          {locale === "th" ? "ผู้ให้เช่า" : "Landlord"}:
                         </p>
-                      )}
+                        <div className="space-y-1">
+                          <p>
+                            <span className="font-medium">
+                              {locale === "th" ? "ชื่อ" : "Name"}:
+                            </span>{" "}
+                            {owner?.name || bill.apartmentId.name}
+                          </p>
+                          <p>
+                            <span className="font-medium">
+                              {locale === "th" ? "ที่อยู่" : "Address"}:
+                            </span>{" "}
+                            {owner?.address || bill.apartmentId.address}
+                          </p>
+                          <p>
+                            <span className="font-medium">
+                              {locale === "th" ? "โทร" : "Phone"}:
+                            </span>{" "}
+                            {owner?.phone || bill.apartmentId.phone}
+                          </p>
+                          {owner?.taxId && (
+                            <p>
+                              <span className="font-medium">
+                                {locale === "th"
+                                  ? "เลขประจำตัวผู้เสียภาษี"
+                                  : "Tax ID"}
+                                :
+                              </span>{" "}
+                              {owner.taxId}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Tenant Information - Right Column */}
+                      <div>
+                        <p className="font-semibold text-gray-800 mb-1">
+                          {locale === "th" ? "ผู้เช่า" : "Tenant"}:
+                        </p>
+                        <div className="space-y-1">
+                          <p>
+                            <span className="font-medium">
+                              {locale === "th" ? "ชื่อ" : "Name"}:
+                            </span>{" "}
+                            {bill.tenantName}
+                          </p>
+                          <p>
+                            <span className="font-medium">
+                              {locale === "th" ? "ที่อยู่" : "Address"}:
+                            </span>{" "}
+                            {bill.tenantAddress}
+                          </p>
+                          <p>
+                            <span className="font-medium">
+                              {locale === "th" ? "โทร" : "Phone"}:
+                            </span>{" "}
+                            {bill.tenantPhone}
+                          </p>
+                          {bill.tenantTaxId && (
+                            <p>
+                              <span className="font-medium">
+                                {locale === "th"
+                                  ? "เลขประจำตัวผู้เสียภาษี"
+                                  : "Tax ID"}
+                                :
+                              </span>{" "}
+                              {bill.tenantTaxId}
+                            </p>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   </div>
 
