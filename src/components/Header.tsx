@@ -2,12 +2,19 @@
 
 import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
+import { usePathname } from 'next/navigation';
 import { Home, Building, FileText, Settings, BarChart3 } from 'lucide-react';
 import LanguageSwitcher from './LanguageSwitcher';
 
 export default function Header() {
   const t = useTranslations('nav');
   const locale = useLocale();
+  const pathname = usePathname();
+
+  // Hide header on PDF pages
+  if (pathname.includes('/pdf')) {
+    return null;
+  }
 
   const navItems = [
     { href: `/${locale}`, icon: Home, label: t('apartments'), isHome: true },

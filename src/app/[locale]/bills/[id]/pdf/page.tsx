@@ -801,7 +801,8 @@ export default function BillPDFPage({
           header,
           nav,
           .print\\:hidden,
-          [class*="print:hidden"] {
+          [class*="print:hidden"],
+          [class*="print\\:hidden"] {
             display: none !important;
             visibility: hidden !important;
             opacity: 0 !important;
@@ -809,6 +810,9 @@ export default function BillPDFPage({
             width: 0 !important;
             margin: 0 !important;
             padding: 0 !important;
+            position: absolute !important;
+            left: -9999px !important;
+            top: -9999px !important;
           }
 
           /* Single page layout - critical for A4 */
