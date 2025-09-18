@@ -229,7 +229,7 @@ export default function BillPDFPage({
         </div>
 
         {/* PDF Content - Single A4 Page Layout */}
-        <div className="container mx-auto px-4 py-4 print:p-2 print:m-0 max-w-2xl print:max-w-full">
+        <div className="container mx-auto px-4 py-4 print:p-2 print:m-0 max-w-2xl print:max-w-full print:h-screen">
           {/* Two receipts on single A4 page - Fixed height distribution */}
           <div className="space-y-6 print:space-y-3 print:h-full print:flex print:flex-col print:justify-between">
             {["Original", "Customer Copy"].map((copyType) => (
