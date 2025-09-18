@@ -140,27 +140,27 @@ export default function BillPDFPage({
   };
 
   const getContentScale = () => {
-    if (!bill) return 'normal';
+    if (!bill) return "normal";
     const totalItems = getTotalFees();
     // For single A4 page, be more conservative with sizing
-    if (totalItems <= 6) return 'normal';
-    if (totalItems <= 10) return 'small';
-    if (totalItems <= 14) return 'tiny';
-    return 'micro';
+    if (totalItems <= 6) return "normal";
+    if (totalItems <= 10) return "small";
+    if (totalItems <= 14) return "tiny";
+    return "micro";
   };
 
   const getAddressLength = () => {
-    const ownerAddr = owner?.address || bill?.apartmentId?.address || '';
-    const tenantAddr = bill?.tenantAddress || '';
+    const ownerAddr = owner?.address || bill?.apartmentId?.address || "";
+    const tenantAddr = bill?.tenantAddress || "";
     const maxLength = Math.max(ownerAddr.length, tenantAddr.length);
     return maxLength;
   };
 
   const getGridCols = () => {
     const addressLength = getAddressLength();
-    if (addressLength > 80) return 'grid-cols-2';
-    if (addressLength > 60) return 'grid-cols-3';
-    return 'grid-cols-4';
+    if (addressLength > 80) return "grid-cols-2";
+    if (addressLength > 60) return "grid-cols-3";
+    return "grid-cols-4";
   };
 
   if (loading) {
@@ -236,30 +236,54 @@ export default function BillPDFPage({
               <div
                 key={copyType}
                 className={`bg-white border border-gray-300 rounded-lg print:rounded-none print:border-gray-800 print:flex-1 print:h-auto print:max-h-[48vh] print:overflow-hidden ${
-                  getContentScale() === 'normal' ? 'print:text-xs' :
-                  getContentScale() === 'small' ? 'print:text-[11px]' :
-                  getContentScale() === 'tiny' ? 'print:text-[10px]' :
-                  'print:text-[9px]'
+                  getContentScale() === "normal"
+                    ? "print:text-xs"
+                    : getContentScale() === "small"
+                    ? "print:text-[11px]"
+                    : getContentScale() === "tiny"
+                    ? "print:text-[10px]"
+                    : "print:text-[9px]"
                 }`}
               >
                 {/* Header Section - Compact for Single Page */}
-                <div className={`bg-gray-50 print:bg-white border-b border-gray-300 print:border-gray-800 ${
-                  getContentScale() === 'normal' ? 'p-2 print:p-1.5' :
-                  'p-2 print:p-1'
-                }`}>
+                <div
+                  className={`bg-gray-50 print:bg-white border-b border-gray-300 print:border-gray-800 ${
+                    getContentScale() === "normal"
+                      ? "p-2 print:p-1.5"
+                      : "p-2 print:p-1"
+                  }`}
+                >
+                  <div className="flex justify-end text-right mb-1 print:mb-0.5">
+                    <p
+                      className={`font-semibold ${
+                        getContentScale() === "normal"
+                          ? "text-xs print:text-[10px]"
+                          : "text-[10px] print:text-[9px]"
+                      }`}
+                    >
+                      #{bill.runningNumber}
+                    </p>
+                  </div>
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
-                      <h1 className={`font-bold text-gray-900 ${
-                        getContentScale() === 'normal' ? 'text-sm print:text-xs' :
-                        getContentScale() === 'small' ? 'text-xs print:text-[10px]' :
-                        'text-[10px] print:text-[9px]'
-                      }`}>
+                      <h1
+                        className={`font-bold text-gray-900 ${
+                          getContentScale() === "normal"
+                            ? "text-sm print:text-xs"
+                            : getContentScale() === "small"
+                            ? "text-xs print:text-[10px]"
+                            : "text-[10px] print:text-[9px]"
+                        }`}
+                      >
                         {owner?.name || bill.apartmentId.name}
                       </h1>
-                      <div className={`text-gray-600 ${
-                        getContentScale() === 'normal' ? 'text-[10px]' :
-                        'text-[9px]'
-                      }`}>
+                      <div
+                        className={`text-gray-600 ${
+                          getContentScale() === "normal"
+                            ? "text-[10px]"
+                            : "text-[9px]"
+                        }`}
+                      >
                         <p className="truncate">
                           {owner?.address || bill.apartmentId.address}
                         </p>
@@ -278,57 +302,66 @@ export default function BillPDFPage({
                       </div>
                     </div>
                     <div className="text-center mx-3">
-                      <h2 className={`font-bold text-black-600 print:text-gray-800 ${
-                        getContentScale() === 'normal' ? 'text-base print:text-sm' :
-                        getContentScale() === 'small' ? 'text-sm print:text-xs' :
-                        'text-xs print:text-[10px]'
-                      }`}>
+                      <h2
+                        className={`font-bold text-black-600 print:text-gray-800 ${
+                          getContentScale() === "normal"
+                            ? "text-base print:text-sm"
+                            : getContentScale() === "small"
+                            ? "text-sm print:text-xs"
+                            : "text-xs print:text-[10px]"
+                        }`}
+                      >
                         {locale === "th" ? "ใบแจ้งหนี้" : "BILL"}
                       </h2>
-                      <p className={`font-semibold ${
-                        getContentScale() === 'normal' ? 'text-xs print:text-[10px]' :
-                        'text-[10px] print:text-[9px]'
-                      }`}>
-                        #{bill.runningNumber}
-                      </p>
-                      <p className={`${
-                        getContentScale() === 'normal' ? 'text-[10px]' :
-                        'text-[9px]'
-                      }`}>{formatDate(bill.billingDate)}</p>
-                    </div>
-                    <div className="text-right">
-                      <div className="bg-black-100 print:bg-gray-100 px-2 py-1 rounded print:rounded-none">
-                        <p className={`font-bold ${
-                          getContentScale() === 'normal' ? 'text-[10px]' :
-                          'text-[9px]'
-                        }`}>{copyType}</p>
-                      </div>
-                      <p className={`text-gray-500 ${
-                        getContentScale() === 'normal' ? 'text-[10px]' :
-                        'text-[9px]'
-                      }`}>
+                      <p
+                        className={`text-gray-500 ${
+                          getContentScale() === "normal"
+                            ? "text-[10px]"
+                            : "text-[9px]"
+                        }`}
+                      >
                         {locale === "th" ? "ห้อง" : "Room"}:{" "}
                         {bill.roomId.roomNumber}
+                      </p>
+                      <p
+                        className={`${
+                          getContentScale() === "normal"
+                            ? "text-[10px]"
+                            : "text-[9px]"
+                        }`}
+                      >
+                        {formatDate(bill.billingDate)}
                       </p>
                     </div>
                   </div>
                 </div>
 
                 {/* Main Content - Compact */}
-                <div className={`print:flex-1 print:overflow-hidden ${
-                  getContentScale() === 'normal' ? 'p-2 print:p-1.5' :
-                  'p-1.5 print:p-1'
-                }`}>
+                <div
+                  className={`print:flex-1 print:overflow-hidden ${
+                    getContentScale() === "normal"
+                      ? "p-2 print:p-1.5"
+                      : "p-1.5 print:p-1"
+                  }`}
+                >
                   {/* Owner Information Row */}
-                  <div className={`border-b border-gray-200 pb-1 ${
-                    getContentScale() === 'normal' ? 'text-[10px] mb-1.5 print:mb-1' :
-                    getContentScale() === 'small' ? 'text-[9px] mb-1 print:mb-0.5' :
-                    'text-[8px] mb-0.5 print:mb-0.5'
-                  }`}>
+                  <div
+                    className={`border-b border-gray-200 pb-1 ${
+                      getContentScale() === "normal"
+                        ? "text-[10px] mb-1.5 print:mb-1"
+                        : getContentScale() === "small"
+                        ? "text-[9px] mb-1 print:mb-0.5"
+                        : "text-[8px] mb-0.5 print:mb-0.5"
+                    }`}
+                  >
                     <p className="font-semibold text-gray-800 mb-1">
                       {locale === "th" ? "ผู้ให้เช่า" : "Landlord"}:
                     </p>
-                    <div className={`grid ${getGridCols()} gap-2 ${getContentScale() === 'tiny' ? 'gap-1' : ''}`}>
+                    <div
+                      className={`grid ${getGridCols()} gap-2 ${
+                        getContentScale() === "tiny" ? "gap-1" : ""
+                      }`}
+                    >
                       <p>
                         <span className="font-medium">
                           {locale === "th" ? "ชื่อ" : "Name"}:
@@ -362,15 +395,23 @@ export default function BillPDFPage({
                   </div>
 
                   {/* Apartment Information Row */}
-                  <div className={`border-b border-gray-200 pb-1 ${
-                    getContentScale() === 'normal' ? 'text-[10px] mb-1.5 print:mb-1' :
-                    getContentScale() === 'small' ? 'text-[9px] mb-1 print:mb-0.5' :
-                    'text-[8px] mb-0.5 print:mb-0.5'
-                  }`}>
+                  <div
+                    className={`border-b border-gray-200 pb-1 ${
+                      getContentScale() === "normal"
+                        ? "text-[10px] mb-1.5 print:mb-1"
+                        : getContentScale() === "small"
+                        ? "text-[9px] mb-1 print:mb-0.5"
+                        : "text-[8px] mb-0.5 print:mb-0.5"
+                    }`}
+                  >
                     <p className="font-semibold text-gray-800 mb-1">
                       {locale === "th" ? "อพาร์ตเมนต์" : "Apartment"}:
                     </p>
-                    <div className={`grid ${getGridCols()} gap-2 ${getContentScale() === 'tiny' ? 'gap-1' : ''}`}>
+                    <div
+                      className={`grid ${getGridCols()} gap-2 ${
+                        getContentScale() === "tiny" ? "gap-1" : ""
+                      }`}
+                    >
                       <p>
                         <span className="font-medium">
                           {locale === "th" ? "ชื่อ" : "Name"}:
@@ -399,15 +440,23 @@ export default function BillPDFPage({
                   </div>
 
                   {/* Tenant Information Row */}
-                  <div className={`border-b border-gray-200 pb-1 ${
-                    getContentScale() === 'normal' ? 'text-[10px] mb-1.5 print:mb-1' :
-                    getContentScale() === 'small' ? 'text-[9px] mb-1 print:mb-0.5' :
-                    'text-[8px] mb-0.5 print:mb-0.5'
-                  }`}>
+                  <div
+                    className={`border-b border-gray-200 pb-1 ${
+                      getContentScale() === "normal"
+                        ? "text-[10px] mb-1.5 print:mb-1"
+                        : getContentScale() === "small"
+                        ? "text-[9px] mb-1 print:mb-0.5"
+                        : "text-[8px] mb-0.5 print:mb-0.5"
+                    }`}
+                  >
                     <p className="font-semibold text-gray-800 mb-1">
                       {locale === "th" ? "ผู้เช่า" : "Tenant"}:
                     </p>
-                    <div className={`grid ${getGridCols()} gap-2 ${getContentScale() === 'tiny' ? 'gap-1' : ''}`}>
+                    <div
+                      className={`grid ${getGridCols()} gap-2 ${
+                        getContentScale() === "tiny" ? "gap-1" : ""
+                      }`}
+                    >
                       <p>
                         <span className="font-medium">
                           {locale === "th" ? "ชื่อ" : "Name"}:
@@ -441,11 +490,15 @@ export default function BillPDFPage({
                   </div>
 
                   {/* Period & Due Date Row */}
-                  <div className={`border-b border-gray-200 pb-1 ${
-                    getContentScale() === 'normal' ? 'text-[10px] mb-1.5 print:mb-1' :
-                    getContentScale() === 'small' ? 'text-[9px] mb-1 print:mb-0.5' :
-                    'text-[8px] mb-0.5 print:mb-0.5'
-                  }`}>
+                  <div
+                    className={`border-b border-gray-200 pb-1 ${
+                      getContentScale() === "normal"
+                        ? "text-[10px] mb-1.5 print:mb-1"
+                        : getContentScale() === "small"
+                        ? "text-[9px] mb-1 print:mb-0.5"
+                        : "text-[8px] mb-0.5 print:mb-0.5"
+                    }`}
+                  >
                     <div className="grid grid-cols-2 gap-4">
                       <p>
                         <span className="font-medium">
@@ -471,12 +524,17 @@ export default function BillPDFPage({
                   </div>
 
                   {/* Billing Table - Compact Details */}
-                  <div className={`${
-                    getContentScale() === 'normal' ? 'space-y-1 text-[10px]' :
-                    getContentScale() === 'small' ? 'space-y-0.5 text-[9px]' :
-                    getContentScale() === 'tiny' ? 'space-y-0.5 text-[8px]' :
-                    'space-y-0 text-[8px]'
-                  }`}>
+                  <div
+                    className={`${
+                      getContentScale() === "normal"
+                        ? "space-y-1 text-[10px]"
+                        : getContentScale() === "small"
+                        ? "space-y-0.5 text-[9px]"
+                        : getContentScale() === "tiny"
+                        ? "space-y-0.5 text-[8px]"
+                        : "space-y-0 text-[8px]"
+                    }`}
+                  >
                     {/* Rent */}
                     <div className="flex justify-between py-1 border-b border-gray-200">
                       <span>{locale === "th" ? "ค่าเช่า" : "Rent"}</span>
@@ -522,11 +580,15 @@ export default function BillPDFPage({
                           {bill.electricity &&
                           bill.electricity.endMeter !== undefined &&
                           bill.electricity.startMeter !== undefined ? (
-                            <div className={`text-gray-500 mt-1 ${
-                              getContentScale() === 'normal' ? 'text-[8px]' :
-                              getContentScale() === 'small' ? 'text-[7px]' :
-                              'text-[7px]'
-                            }`}>
+                            <div
+                              className={`text-gray-500 mt-1 ${
+                                getContentScale() === "normal"
+                                  ? "text-[8px]"
+                                  : getContentScale() === "small"
+                                  ? "text-[7px]"
+                                  : "text-[7px]"
+                              }`}
+                            >
                               {locale === "th" ? "มิเตอร์เดิม" : "Start Meter"}:{" "}
                               {bill.electricity.startMeter} |{" "}
                               {locale === "th" ? "มิเตอร์ใหม่" : "End Meter"}:{" "}
@@ -540,11 +602,15 @@ export default function BillPDFPage({
                               {locale === "th" ? "ค่าบริการ" : "service fee"})
                             </div>
                           ) : (
-                            <div className={`text-gray-500 mt-1 ${
-                              getContentScale() === 'normal' ? 'text-[8px]' :
-                              getContentScale() === 'small' ? 'text-[7px]' :
-                              'text-[7px]'
-                            }`}>
+                            <div
+                              className={`text-gray-500 mt-1 ${
+                                getContentScale() === "normal"
+                                  ? "text-[8px]"
+                                  : getContentScale() === "small"
+                                  ? "text-[7px]"
+                                  : "text-[7px]"
+                              }`}
+                            >
                               {locale === "th" ? "ไม่มีข้อมูล" : "No data"}
                             </div>
                           )}
@@ -565,11 +631,15 @@ export default function BillPDFPage({
                           {bill.water &&
                           bill.water.endMeter !== undefined &&
                           bill.water.startMeter !== undefined ? (
-                            <div className={`text-gray-500 mt-1 ${
-                              getContentScale() === 'normal' ? 'text-[8px]' :
-                              getContentScale() === 'small' ? 'text-[7px]' :
-                              'text-[7px]'
-                            }`}>
+                            <div
+                              className={`text-gray-500 mt-1 ${
+                                getContentScale() === "normal"
+                                  ? "text-[8px]"
+                                  : getContentScale() === "small"
+                                  ? "text-[7px]"
+                                  : "text-[7px]"
+                              }`}
+                            >
                               {locale === "th" ? "มิเตอร์เดิม" : "Start Meter"}:{" "}
                               {bill.water.startMeter} |{" "}
                               {locale === "th" ? "มิเตอร์ใหม่" : "End Meter"}:{" "}
@@ -581,11 +651,15 @@ export default function BillPDFPage({
                               {locale === "th" ? "ค่าบริการ" : "service fee"})
                             </div>
                           ) : (
-                            <div className={`text-gray-500 mt-1 ${
-                              getContentScale() === 'normal' ? 'text-[8px]' :
-                              getContentScale() === 'small' ? 'text-[7px]' :
-                              'text-[7px]'
-                            }`}>
+                            <div
+                              className={`text-gray-500 mt-1 ${
+                                getContentScale() === "normal"
+                                  ? "text-[8px]"
+                                  : getContentScale() === "small"
+                                  ? "text-[7px]"
+                                  : "text-[7px]"
+                              }`}
+                            >
                               {locale === "th" ? "ไม่มีข้อมูล" : "No data"}
                             </div>
                           )}
@@ -596,61 +670,102 @@ export default function BillPDFPage({
                       </div>
                     </div>
 
-                    {/* Air Conditioning Fee */}
-                    {bill.airconFee > 0 && (
-                      <div className="flex justify-between py-1 border-b border-gray-200">
-                        <span>
-                          {locale === "th" ? "ค่าแอร์" : "Air Conditioning"}
-                        </span>
-                        <span className="font-medium">
-                          ฿{bill.airconFee.toLocaleString()}
-                        </span>
+                    {/* Additional Fees Section */}
+                    {(bill.airconFee > 0 ||
+                      bill.fridgeFee > 0 ||
+                      bill.otherFees.length > 0) && (
+                      <div className="py-1 border-b border-gray-200">
+                        <div className="flex justify-between">
+                          <div className="flex-1">
+                            <span className="font-medium">
+                              {locale === "th"
+                                ? "ค่าบริการเพิ่มเติม"
+                                : "Additional Fees"}
+                            </span>
+                            <div
+                              className={`text-gray-500 mt-1 ${
+                                getContentScale() === "normal"
+                                  ? "text-[8px]"
+                                  : getContentScale() === "small"
+                                  ? "text-[7px]"
+                                  : "text-[7px]"
+                              }`}
+                            >
+                              {/* Build details string */}
+                              {(() => {
+                                const details = [];
+                                if (bill.airconFee > 0) {
+                                  details.push(
+                                    `${
+                                      locale === "th" ? "แอร์" : "AC"
+                                    }: ฿${bill.airconFee.toLocaleString()}`
+                                  );
+                                }
+                                if (bill.fridgeFee > 0) {
+                                  details.push(
+                                    `${
+                                      locale === "th" ? "ตู้เย็น" : "Fridge"
+                                    }: ฿${bill.fridgeFee.toLocaleString()}`
+                                  );
+                                }
+                                bill.otherFees.forEach((fee) => {
+                                  const shortName =
+                                    fee.description.length > 20
+                                      ? fee.description.substring(0, 10) + "..."
+                                      : fee.description;
+                                  details.push(
+                                    `${shortName}: ฿${fee.amount.toLocaleString()}`
+                                  );
+                                });
+                                return details.join(" | ");
+                              })()}
+                            </div>
+                          </div>
+                          <span className="font-medium">
+                            ฿
+                            {(
+                              bill.airconFee +
+                              bill.fridgeFee +
+                              bill.otherFees.reduce(
+                                (sum, fee) => sum + fee.amount,
+                                0
+                              )
+                            ).toLocaleString()}
+                          </span>
+                        </div>
                       </div>
                     )}
-
-                    {/* Fridge Fee */}
-                    {bill.fridgeFee > 0 && (
-                      <div className="flex justify-between py-1 border-b border-gray-200">
-                        <span>
-                          {locale === "th" ? "ค่าตู้เย็น" : "Refrigerator"}
-                        </span>
-                        <span className="font-medium">
-                          ฿{bill.fridgeFee.toLocaleString()}
-                        </span>
-                      </div>
-                    )}
-
-                    {/* Other Fees */}
-                    {bill.otherFees.map((fee, i) => (
-                      <div
-                        key={i}
-                        className="flex justify-between py-1 border-b border-gray-200"
-                      >
-                        <span className="truncate">{fee.description}</span>
-                        <span className="font-medium">
-                          ฿{fee.amount.toLocaleString()}
-                        </span>
-                      </div>
-                    ))}
 
                     {/* Grand Total */}
-                    <div className={`flex justify-between border-t-2 border-gray-400 bg-gray-50 print:bg-gray-100 mt-1 ${
-                      getContentScale() === 'normal' ? 'py-1.5 -mx-2 print:-mx-1.5 px-2 print:px-1.5' :
-                      getContentScale() === 'small' ? 'py-1 -mx-1.5 print:-mx-1 px-1.5 print:px-1' :
-                      'py-1 -mx-1 print:-mx-1 px-1 print:px-1'
-                    }`}>
-                      <span className={`font-bold ${
-                        getContentScale() === 'normal' ? 'text-xs' :
-                        getContentScale() === 'small' ? 'text-[10px]' :
-                        'text-[9px]'
-                      }`}>
+                    <div
+                      className={`flex justify-between border-t-2 border-gray-400 bg-gray-50 print:bg-gray-100 mt-1 ${
+                        getContentScale() === "normal"
+                          ? "py-1.5 -mx-2 print:-mx-1.5 px-2 print:px-1.5"
+                          : getContentScale() === "small"
+                          ? "py-1 -mx-1.5 print:-mx-1 px-1.5 print:px-1"
+                          : "py-1 -mx-1 print:-mx-1 px-1 print:px-1"
+                      }`}
+                    >
+                      <span
+                        className={`font-bold ${
+                          getContentScale() === "normal"
+                            ? "text-xs"
+                            : getContentScale() === "small"
+                            ? "text-[10px]"
+                            : "text-[9px]"
+                        }`}
+                      >
                         {locale === "th" ? "รวมทั้งสิ้น" : "TOTAL AMOUNT"}
                       </span>
-                      <span className={`font-bold text-black-600 print:text-gray-800 ${
-                        getContentScale() === 'normal' ? 'text-xs' :
-                        getContentScale() === 'small' ? 'text-[10px]' :
-                        'text-[9px]'
-                      }`}>
+                      <span
+                        className={`font-bold text-black-600 print:text-gray-800 ${
+                          getContentScale() === "normal"
+                            ? "text-xs"
+                            : getContentScale() === "small"
+                            ? "text-[10px]"
+                            : "text-[9px]"
+                        }`}
+                      >
                         ฿{bill.grandTotal.toLocaleString()}{" "}
                         {locale === "th" ? "บาท" : "THB"}
                       </span>
@@ -745,15 +860,15 @@ export default function BillPDFPage({
           }
           .print\\:text-\\[9px\\] {
             font-size: 9px !important;
-            line-height: 1.0 !important;
+            line-height: 1 !important;
           }
           .print\\:text-\\[8px\\] {
             font-size: 8px !important;
-            line-height: 1.0 !important;
+            line-height: 1 !important;
           }
           .print\\:text-\\[7px\\] {
             font-size: 7px !important;
-            line-height: 1.0 !important;
+            line-height: 1 !important;
           }
           .print\\:text-xs {
             font-size: 10px !important;
