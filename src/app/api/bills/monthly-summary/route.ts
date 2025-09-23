@@ -78,8 +78,8 @@ export async function GET(request: NextRequest) {
       const invoiceSequence = index + 1;
       const billNumber = `${month.padStart(2, '0')}${year.slice(-2)}-${invoiceSequence.toString().padStart(3, '0')}`;
       
-      // Calculate other fees total
-      const otherFeesTotal = bill.otherFees.reduce((sum, fee) => sum + fee.amount, 0);
+      // Calculate other fees total (includes aircon fee, fridge fee, and additional other fees)
+      const otherFeesTotal = bill.airconFee + bill.fridgeFee + bill.otherFees.reduce((sum, fee) => sum + fee.amount, 0);
 
       return {
         _id: bill._id,
